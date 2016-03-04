@@ -16,7 +16,9 @@ function loadConsts() {
 
   FIRST_HEADER =
   document.querySelector(".timeline-comment-wrapper .timeline-comment-header-text");
-  FIRST_HEADER.style.maxWidth = "initial";
+  if (FIRST_HEADER) {
+    FIRST_HEADER.style.maxWidth = "initial";
+  }
 
   LOGGED_IN_USER =
   document.querySelector(".js-menu-target").getAttribute("href").slice(1) || "";
@@ -155,17 +157,14 @@ function update() {
         } else {
           getSyncStorage({ "access_token": null })
           .then((res) => {
-            if (res.access_token) {
-              // repo specific
-              prCount(true, res.access_token)
-              .then((repoInfo) => {
-                if (repoInfo.errors) {
-                  addContributorInfo(repoInfo.errors[0].message);
-                  return;
-                }
-                showInfo(repoInfo);
-              });
-            }
+            prCount(true, res.access_token)
+            .then((repoInfo) => {
+              if (repoInfo.errors) {
+                addContributorInfo(repoInfo.errors[0].message);
+                return;
+              }
+              showInfo(repoInfo);
+            });
           });
         }
       });
