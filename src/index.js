@@ -1,22 +1,39 @@
+"use strict";
+
 /* global getSyncStorage, setSyncStorage */
 
 let BASE_URL = "https://api.github.com/search/issues";
 
-// "/babel/babel-eslint/pull/1"
-let pathNameArr = window.location.pathname.split("/");
-let ORG = pathNameArr[1]; // babel
-let REPO = pathNameArr[2]; // babel-eslint
-let CURRENT_PR = pathNameArr[4]; // 3390
-let ORG_REPO_PATH = ORG + "/" + REPO; // babel/babel-eslint
+let ORG, REPO, CURRENT_PR, ORG_REPO_PATH, FIRST_HEADER, LOGGED_IN_USER, CONTRIBUTOR;
 
-let firstHeader =
-document.querySelector(".timeline-comment-wrapper .timeline-comment-header-text");
+function loadConsts() {
+  // "/babel/babel-eslint/pull/1"
+  let pathNameArr = window.location.pathname.split("/");
+  ORG = pathNameArr[1]; // babel
+  REPO = pathNameArr[2]; // babel-eslint
+  CURRENT_PR = pathNameArr[4]; // 3390
+  ORG_REPO_PATH = ORG + "/" + REPO; // babel/babel-eslint
 
-let LOGGED_IN_USER =
-document.querySelector(".js-menu-target").getAttribute("href").slice(1) || "";
+  FIRST_HEADER =
+  document.querySelector(".timeline-comment-wrapper .timeline-comment-header-text");
+  FIRST_HEADER.style.maxWidth = "initial";
 
-let CONTRIBUTOR =
-document.querySelector(".timeline-comment-wrapper .timeline-comment-header-text strong").innerText.trim();
+  LOGGED_IN_USER =
+  document.querySelector(".js-menu-target").getAttribute("href").slice(1) || "";
+
+  CONTRIBUTOR =
+  document.querySelector(".timeline-comment-wrapper .timeline-comment-header-text strong").innerText.trim();
+
+  if (!document.querySelector("#gce-update")) {
+    let linkNode = FIRST_HEADER.appendChild(document.createElement("a"));
+    linkNode.id = "gce-num-prs";
+    linkNode.href =
+    `https://github.com/${ORG_REPO_PATH}/pulls?utf8=%E2%9C%93&q=is%3Aboth+is%3Apr+author%3A${CONTRIBUTOR}`;
+    linkNode.text = "Loading # of PRs...";
+  }
+}
+
+loadConsts();
 
 function queryParams(checkRepo, access_token) {
   if (checkRepo) {
@@ -44,10 +61,9 @@ function prCount(checkRepo, access_token) {
   // console.log(searchURL);
 
   return fetch(searchURL)
-  .then(function(response) {
-    return response.json();
-  }).then(function(json) {
-    console.log("parsed json", json);
+  .then((res) => res.json())
+  .then(function(json) {
+    // console.log("parsed json", json);
 
     if (json.errors) {
       return json;
@@ -71,8 +87,6 @@ function prCount(checkRepo, access_token) {
     });
 
     return obj;
-  }).catch(function(ex) {
-    console.log("parsing failed", ex);
   });
 }
 
@@ -90,48 +104,75 @@ function showInfo(repoInfo) {
 }
 
 function addContributorInfo(text) {
-  let link = firstHeader.appendChild(document.createElement("a"));
-  link.textContent = text;
-  link.href =
-  `https://github.com/${ORG_REPO_PATH}/pulls?utf8=%E2%9C%93&q=is%3Aboth+is%3Apr+author%3A${CONTRIBUTOR}`;
+  let linkNode = document.querySelector("#gce-num-prs");
+  linkNode.textContent = text;
 
-  let update = firstHeader.appendChild(document.createElement("a"));
-  update.textContent = "(Update)";
-  update.addEventListener("click", () => {
-    window.reload();
-  });
-}
-
-function update() {
-  if (ORG_REPO_PATH === "babel/babel") {
-  // if (ORG_REPO_PATH) {
-    getSyncStorage({
-      [CONTRIBUTOR]: {
-        [ORG_REPO_PATH]: {}
-      }
-    })
-    .then((storage) => {
-      let storageRes = storage[CONTRIBUTOR][ORG_REPO_PATH];
-      if (storageRes.prs) {
-        showInfo(storageRes);
-      } else {
-        getSyncStorage({ "access_token": null })
-        .then((res) => {
-          if (res.access_token) {
-            // repo specific
-            prCount(true, res.access_token)
-            .then(function([repoInfo]) {
-              if (repoInfo.errors) {
-                addContributorInfo(repoInfo.errors[0].message);
-                return;
-              }
-              showInfo(repoInfo);
-            });
+  if (!document.querySelector("#gce-update")) {
+    let updateNode = FIRST_HEADER.appendChild(document.createElement("a"));
+    updateNode.style = "float: right";
+    updateNode.id = "gce-update";
+    updateNode.textContent = "[Update #PRs]";
+    updateNode.addEventListener("click", function() {
+      setSyncStorage({
+        [CONTRIBUTOR]: {
+          [ORG_REPO_PATH]: {
+            prs: null
           }
-        });
-      }
+        }
+      });
+      update();
     });
   }
 }
 
+function update() {
+  getSyncStorage({ repos: '' })
+  .then((storage) => {
+    if (storage.repos) {
+      var storageRepos = storage.repos.split("\n");
+      return storageRepos.some((storageRepo) => {
+        if (storageRepo.indexOf("/") >= 0) {
+          return storageRepo.indexOf(ORG_REPO_PATH) >= 0;
+        } else {
+          return storageRepo.indexOf(ORG) >= 0;
+        }
+      });
+    }
+  })
+  .then((shouldShow) => {
+    if (shouldShow) {
+      getSyncStorage({
+        [CONTRIBUTOR]: {
+          [ORG_REPO_PATH]: {}
+        }
+      })
+      .then((storage) => {
+        let storageRes = storage[CONTRIBUTOR][ORG_REPO_PATH];
+        if (storageRes.prs) {
+          showInfo(storageRes);
+        } else {
+          getSyncStorage({ "access_token": null })
+          .then((res) => {
+            if (res.access_token) {
+              // repo specific
+              prCount(true, res.access_token)
+              .then((repoInfo) => {
+                if (repoInfo.errors) {
+                  addContributorInfo(repoInfo.errors[0].message);
+                  return;
+                }
+                showInfo(repoInfo);
+              });
+            }
+          });
+        }
+      });
+    }
+  });
+}
+
 update();
+chrome.runtime.onMessage.addListener((e) => {
+  loadConsts();
+  update();
+});

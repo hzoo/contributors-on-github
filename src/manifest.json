@@ -4,7 +4,8 @@
   "version": "1.0.0",
   "permissions": [
     "activeTab",
-    "storage"
+    "storage",
+    "webNavigation"
   ],
   "icons": {
   },
