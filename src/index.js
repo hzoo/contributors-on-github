@@ -1,6 +1,6 @@
 "use strict";
 
-/* global getSyncStorage, setSyncStorage */
+/* global chrome, getSyncStorage, setSyncStorage */
 
 let BASE_URL = "https://api.github.com/search/issues";
 
@@ -94,9 +94,9 @@ function showInfo(repoInfo) {
   let repoPrs = repoInfo.prs;
   let repoText = `${repoPrs} PRs `;
   if (repoInfo  .firstPRNumber === +CURRENT_PR) {
-    repoText = `First PR to ${ORG_REPO_PATH}!`;
+    repoText = "First PR";
     if (repoPrs > 1) {
-      repoText += ` out of ${repoPrs} total PRs made to ${ORG_REPO_PATH}`;
+      repoText += ` out of ${repoPrs} (to the repo)`;
     }
   }
 
@@ -126,10 +126,10 @@ function addContributorInfo(text) {
 }
 
 function update() {
-  getSyncStorage({ repos: '' })
+  getSyncStorage({ repos: "" })
   .then((storage) => {
     if (storage.repos) {
-      var storageRepos = storage.repos.split("\n");
+      let storageRepos = storage.repos.split("\n");
       return storageRepos.some((storageRepo) => {
         if (storageRepo.indexOf("/") >= 0) {
           return storageRepo.indexOf(ORG_REPO_PATH) >= 0;
@@ -172,7 +172,7 @@ function update() {
 }
 
 update();
-chrome.runtime.onMessage.addListener((e) => {
+chrome.runtime.onMessage.addListener(() => {
   loadConsts();
   update();
 });
