@@ -26,7 +26,7 @@ function loadConsts() {
   CONTRIBUTOR =
   document.querySelector(".timeline-comment-wrapper .timeline-comment-header-text strong").innerText.trim();
 
-  if (!document.querySelector("#gce-update")) {
+  if (!document.querySelector("#gce-num-prs")) {
     let linkNode = FIRST_HEADER.appendChild(document.createElement("a"));
     linkNode.id = "gce-num-prs";
     linkNode.href =
@@ -107,13 +107,13 @@ function showInfo(repoInfo) {
 
 function addContributorInfo(text) {
   let linkNode = document.querySelector("#gce-num-prs");
-  linkNode.textContent = text;
+  linkNode.text = text;
 
   if (!document.querySelector("#gce-update")) {
     let updateNode = FIRST_HEADER.appendChild(document.createElement("a"));
     updateNode.style = "float: right";
     updateNode.id = "gce-update";
-    updateNode.textContent = "[Update #PRs]";
+    updateNode.text = "[Update #PRs]";
     updateNode.addEventListener("click", function() {
       setSyncStorage({
         [CONTRIBUTOR]: {
@@ -168,6 +168,9 @@ function update() {
           });
         }
       });
+    } else {
+      let linkNode = document.querySelector("#gce-num-prs");
+      linkNode.text = "[Filtered Repo]";
     }
   });
 }
