@@ -1,20 +1,20 @@
 /* global getSyncStorage, setSyncStorage */
 
 document.addEventListener("DOMContentLoaded", () => {
-  const formOauthToken = document.getElementById("oauth_token");
-  const formRepos = document.getElementById("repos");
+  const oauthTokenInput = document.getElementById("oauth_token");
+  const reposInput = document.getElementById("repos");
 
   getSyncStorage({ "access_token": null, "repos": null })
   .then(({ access_token, repos }) => {
-    if (access_token) formOauthToken.value = access_token;
-    if (repos) formRepos.value = repos;
+    if (access_token) oauthTokenInput.value = access_token;
+    if (repos) reposInput.value = repos;
   });
 
-  formOauthToken.addEventListener("change", () => {
-    setSyncStorage({ "access_token": formOauthToken.value });
+  oauthTokenInput.addEventListener("change", () => {
+    setSyncStorage({ "access_token": oauthTokenInput.value });
   });
 
-  formRepos.addEventListener("change", () => {
-    setSyncStorage({ "repos": formRepos.value });
+  reposInput.addEventListener("change", () => {
+    setSyncStorage({ "repos": reposInput.value });
   });
 });

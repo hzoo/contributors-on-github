@@ -137,6 +137,8 @@ function update() {
           return storageRepo.indexOf(ORG) >= 0;
         }
       });
+    } else {
+      return true;
     }
   })
   .then((shouldShow) => {
