@@ -10,12 +10,12 @@
 
 #### Usage
 
-![](options.png)
+You may want to create or get a "access token" that uses the `public_repo` permission if you want to use a 30/min rate limit instead of 10/min (might not be necessary).
 
-You may want to create or get a "access token" that uses the `public_repo` permission if you want to use a 30/min rate limit instead of 10/min.
-
-You can add some orgs or specific repos for this script to run on (if you don't want this to run on all repos).
+If you don't want this to run on all repos, you can add some orgs or specific repos for this script to run on.
 - [ ] A potential feature request would be to run another request to automatically add all orgs of the user to the list.
+
+![](options.png)
 
 #### Permissions
 - "activeTab": to add the first PR text to the active tab
