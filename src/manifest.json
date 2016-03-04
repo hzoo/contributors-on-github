@@ -1,0 +1,34 @@
+{
+  "name": "Github Contributor Stats",
+  "description": "Show Github Contributor Stats",
+  "version": "1.0.0",
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
+  "icons": {
+  },
+  "background": {
+    "persistent": false,
+    "scripts": [
+      "open-options.js"
+    ]
+  },
+  "manifest_version": 2,
+  "minimum_chrome_version": "49",
+  "content_scripts": [
+    {
+      "matches": [
+        "https://github.com/*/*/pull/*"
+      ],
+      "js": [
+        "storage.js",
+        "index.js"
+      ]
+    }
+  ],
+  "options_ui": {
+    "page": "options.html",
+    "chrome_style": true
+  }
+}

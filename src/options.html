@@ -1,0 +1,49 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Github Contributor Stats</title>
+    <style>
+      section {
+        -webkit-padding-start: 18px;
+      }
+      section h3 {
+        -webkit-margin-start: -18px;
+      }
+      input[type='text'] {
+        width: 350px;
+      }
+      textarea {
+        width: 350px;
+      }
+      span.description {
+        font-style: italic;
+        color: grey;
+      }
+      .update-text {
+        font-size: 20px;
+      }
+    </style>
+    <script src="storage.js"></script>
+    <script src="options.js"></script>
+  </head>
+  <body>
+    <p>
+      There is a rate limit of 10/min for non-authenticated requests, and 30/min for autheticated requests.
+    </p>
+    <section>
+      <h3>API access</h3>
+      <p class="description"><a id="gh_link" href="https://github.com/settings/tokens/new?scopes=public_repo&description=Github Contributor Stats" target="gh_target">Create a github auth token</a> with the <strong>"public_repo"</strong> permission and specify it</p>
+      <label for="oauth_token">Token</label>
+      <input type="text" id="oauth_token" placeholder="paste your access token here for 30 requests/min">
+    </section>
+    <section>
+      <h3>Orgs/Repos to watch</h3>
+      <label for="repos">Paste in a new line seperate list of org or org/repo to filter for</label>
+      <textarea id="repos" placeholder="seperate each org/repo by a newline"></textarea>
+      <p class="description"></p>
+    </section>
+
+    <div class="update-text">Refresh your github page after changing options!</div>
+  </body>
+</html>
