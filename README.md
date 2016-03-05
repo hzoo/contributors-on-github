@@ -20,8 +20,9 @@ If you don't want this to run on all repos, you can add some orgs or specific re
 #### Permissions
 - "activeTab": to add the first PR text to the active tab
 - "storage", to store access token, cache user PR data
-- "webNavigation", to listen for pushState events
-
+- "webNavigation", to listen for `History.pushState` events
+    - The [content script](src/index.js) was matching `"https://github.com/*/*/pull/*` which is correct, but if you start from the hompage, then the script won't ever be injected since github is using pushState to change urls. Now it will match `https://github.com` and then check for the specific url.
+ 
 #### Local Install
 - Download the zip, and unzip it
 

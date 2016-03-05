@@ -24,7 +24,11 @@ function loadConsts() {
   document.querySelector(".js-menu-target").getAttribute("href").slice(1) || "";
 
   CONTRIBUTOR =
-  document.querySelector(".timeline-comment-wrapper .timeline-comment-header-text strong").innerText.trim();
+  document.querySelector(".timeline-comment-wrapper .timeline-comment-header-text strong");
+
+  if (CONTRIBUTOR) {
+    CONTRIBUTOR = CONTRIBUTOR.innerText.trim();
+  }
 
   if (!document.querySelector("#gce-num-prs")) {
     let linkNode = FIRST_HEADER.appendChild(document.createElement("a"));
@@ -34,8 +38,6 @@ function loadConsts() {
     linkNode.text = "Loading # of PRs...";
   }
 }
-
-loadConsts();
 
 function queryParams(checkRepo, access_token) {
   if (checkRepo) {
@@ -175,8 +177,16 @@ function update() {
   });
 }
 
-update();
-chrome.runtime.onMessage.addListener(() => {
+if (window.location.href.match(/https?:\/\/(www\.)?github\.com\/[\w_.-]+\/[\w_.-]+\/pull\/\d+/)) {
   loadConsts();
-  update();
+  if (CONTRIBUTOR) update();
+}
+
+chrome.runtime.onMessage.addListener(() => {
+  // not sure why it fires 2 onHistoryStateUpdated updates
+  // the first one is before DOM loads?
+  if (document.querySelector(".timeline-comment-wrapper")) {
+    loadConsts();
+    if (CONTRIBUTOR) update();
+  }
 });
