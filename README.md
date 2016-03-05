@@ -25,7 +25,7 @@ You may want to create or get a "access token" that uses the `public_repo` permi
 If you don't want this to run on all repos, you can add some orgs or specific repos for this script to run on.
 - [ ] A potential feature request would be to run another request to automatically add all orgs of the user to the list.
 
-![](options.png)
+<img src="options.png" alt="options" width="400px" height="400px">
 
 #### Permissions
 - "activeTab": to add the first PR text to the active tab
