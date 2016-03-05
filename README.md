@@ -10,6 +10,16 @@
 
 #### Usage
 
+It can just work without setting any options, so no need to do so unless you are hitting a rate limit.
+
+You can start from any page on `github.com` and when you navigate to a specific pull request (like https://github.com/babel/babel/pull/3331), it will inject the info about the # of PRs a user has made to that specific repo.
+
+![](injected-content.png)
+
+You can click on `[Update PRs]` to update the number if it has changed (since the number is cached with `chrome.sync.storage`).
+
+---
+
 You may want to create or get a "access token" that uses the `public_repo` permission if you want to use a 30/min rate limit instead of 10/min (might not be necessary).
 
 If you don't want this to run on all repos, you can add some orgs or specific repos for this script to run on.
@@ -36,7 +46,9 @@ You should see
 
 ![](chrome-entry.png)
 
-Now you can click on the Options to set your token and repos you want to watch and it should work!
+Now try it out!
+
+You can also click on the Options to set your token and repos if you need to!
 
 Used https://github.com/GoogleChrome/chrome-app-samples/tree/master/samples/github-auth, https://github.com/ekonstantinidis/gitify, https://github.com/sindresorhus/notifier-for-github-chrome for reference.
 
