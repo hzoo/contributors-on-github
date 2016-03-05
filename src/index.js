@@ -52,7 +52,8 @@ function queryParams(checkRepo, access_token) {
     access_token = "";
   }
 
-  return "?q=type:pr+-user:" + CONTRIBUTOR + "+author:" + CONTRIBUTOR + checkRepo +
+  // +-user:" + CONTRIBUTOR + "
+  return "?q=type:pr+author:" + CONTRIBUTOR + checkRepo +
   "&sort=created&order=asc&per_page=1" + access_token;
 }
 
