@@ -177,7 +177,7 @@ function update() {
   });
 }
 
-if (window.location.href.match(/https?:\/\/(www\.)?github\.com\/[\w_.-]+\/[\w_.-]+\/pull\/\d+/)) {
+if (window.location.href.match(/https?:\/\/(www\.)?github\.com\/[\w-.]+\/[\w-.]+\/pull\/\d+/)) {
   loadConsts();
   if (CONTRIBUTOR) update();
 }
