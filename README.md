@@ -1,26 +1,26 @@
 # GitHub Contributior Extension
 
-> Mainly to show if it's a contributors first PR (right now it's specific to the repo, not in general). It adds some info to any urls that look like `https://github.com/babel/babel/pull/3376`
+> Mainly to show if it's a contributors first PR (right now it's specific to the repo, not in general).
+
+> It adds some info to any urls that look like `https://github.com/babel/babel/pull/3376`
 
 ![](firstpr.gif)
 
 > Code is pretty horrible right now.
 > I'm just glad it mostly works + happy to start using it (I guess for this as well)!
-> Feel free to give some suggestions.
+> Feel free to post suggestions and PRs (and an opportunity for me to see a [First PR] for this repo :smile:).
 
 #### Usage
-
-It can just work without setting any options, so no need to do so unless you are hitting a rate limit.
 
 You can start from any page on `github.com` and when you navigate to a specific pull request (like https://github.com/babel/babel/pull/3331), it will inject the info about the # of PRs a user has made to that specific repo.
 
 ![](injected-content.png)
 
-You can click on `[Update PRs]` to update the number if it has changed (since the number is cached with `chrome.sync.storage`).
+You can click on `[Update PRs]` to update the number if it has changed (the number is cached in chrome storage).
 
 ---
 
-You may want to create or get a "access token" that uses the `public_repo` permission if you want to use a 30/min rate limit instead of 10/min (might not be necessary).
+If necessary, you may want to create or get a "access token" that uses the `public_repo` permission if you want to use a 30/min rate limit instead of 10/min.
 
 <img src="options.png" alt="options" height="300px">
 
