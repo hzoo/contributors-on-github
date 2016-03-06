@@ -28,13 +28,8 @@ function loadConsts() {
     CONTRIBUTOR = CONTRIBUTOR.innerText.trim();
   }
 
-  if (!document.querySelector("#gce-num-prs")) {
-    let linkNode = FIRST_HEADER.appendChild(document.createElement("a"));
-    linkNode.id = "gce-num-prs";
-    linkNode.href =
-    `https://github.com/${ORG_REPO_PATH}/pulls?utf8=%E2%9C%93&q=is%3Aboth+is%3Apr+author%3A${CONTRIBUTOR}`;
-    linkNode.text = "Loading # of PRs...";
-  }
+  injectPRText();
+  injectUpdateText();
 }
 
 function buildUrl({base, q: {type, filterUser, author, repo}, sort, order, per_page, access_token}) {
@@ -88,24 +83,31 @@ function prCount(access_token) {
   });
 }
 
-function showInfo(repoInfo) {
-  let repoPrs = repoInfo.prs;
-  let repoText = `${repoPrs} PRs `;
+function setPRText(repoInfo) {
+  let {prs, firstPRNumber} = repoInfo;
+  let PRText = `${prs} PRs `;
 
-  if (repoInfo.firstPRNumber === +CURRENT_PR) {
-    repoText = "First PR";
-    if (repoPrs > 1) {
-      repoText += ` out of ${repoPrs} (to the repo)`;
+  if (firstPRNumber === +CURRENT_PR) {
+    PRText = "First PR";
+    if (prs > 1) {
+      PRText += ` out of ${prs} (to the repo)`;
     }
   }
 
-  addContributorInfo(repoText);
+  return PRText;
 }
 
-function addContributorInfo(text) {
-  let linkNode = document.querySelector("#gce-num-prs");
-  linkNode.text = text;
+function injectPRText() {
+  if (!document.querySelector("#gce-num-prs")) {
+    let linkNode = FIRST_HEADER.appendChild(document.createElement("a"));
+    linkNode.id = "gce-num-prs";
+    linkNode.href =
+    `https://github.com/${ORG_REPO_PATH}/pulls?utf8=%E2%9C%93&q=is%3Aboth+is%3Apr+author%3A${CONTRIBUTOR}`;
+    linkNode.text = "Loading # of PRs...";
+  }
+}
 
+function injectUpdateText() {
   if (!document.querySelector("#gce-update")) {
     let updateNode = FIRST_HEADER.appendChild(document.createElement("a"));
     updateNode.style = "float: right";
@@ -120,22 +122,26 @@ function addContributorInfo(text) {
   }
 }
 
+function updatePRText(text) {
+  document.querySelector("#gce-num-prs").text = text;
+}
+
 function update() {
   getStorage(CONTRIBUTOR, ORG_REPO_PATH)
   .then((storage) => {
     let storageRes = storage[CONTRIBUTOR][ORG_REPO_PATH];
     if (storageRes.prs) {
-      showInfo(storageRes);
+      updatePRText(setPRText(storageRes));
     } else {
       getSyncStorage({ "access_token": null })
       .then((res) => {
         prCount(res.access_token)
         .then((repoInfo) => {
           if (repoInfo.errors) {
-            addContributorInfo(repoInfo.errors[0].message);
+            updatePRText(repoInfo.errors[0].message);
             return;
           }
-          showInfo(repoInfo);
+          updatePRText(setPRText(repoInfo));
         });
       });
     }
