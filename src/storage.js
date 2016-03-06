@@ -25,5 +25,19 @@ function promisify(func) {
 
 window.getSyncStorage = promisify(chrome.storage.sync.get.bind(chrome.storage.sync));
 window.setSyncStorage = promisify(chrome.storage.sync.set.bind(chrome.storage.sync));
-window.getLocalStorage = promisify(chrome.storage.local.get.bind(chrome.storage.local));
-window.setLocalStorage = promisify(chrome.storage.local.set.bind(chrome.storage.sync));
+
+window.setStorage = (CONTRIBUTOR, ORG_REPO_PATH, value) => {
+  return setSyncStorage({
+    [`user:${CONTRIBUTOR}`]: {
+      [ORG_REPO_PATH]: value
+    }
+  });
+}
+
+window.getStorage = (CONTRIBUTOR, ORG_REPO_PATH) => {
+  return getSyncStorage({
+    [`user:${CONTRIBUTOR}`]: {
+      [ORG_REPO_PATH]: {}
+    }
+  });
+}

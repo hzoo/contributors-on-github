@@ -1,8 +1,6 @@
 "use strict";
 
-/* global chrome, getSyncStorage, setSyncStorage */
-
-let BASE_URL = "https://api.github.com/search/issues";
+/* global chrome, getSyncStorage, setStorage, getStorage */
 
 let ORG, REPO, CURRENT_PR, ORG_REPO_PATH, FIRST_HEADER, LOGGED_IN_USER, CONTRIBUTOR;
 
@@ -39,56 +37,51 @@ function loadConsts() {
   }
 }
 
-function queryParams(checkRepo, access_token) {
-  if (checkRepo) {
-    checkRepo = "+repo:" + ORG_REPO_PATH;
-  } else {
-    checkRepo = "";
-  }
-
-  if (access_token) {
-    access_token = "&access_token=" + access_token;
-  } else {
-    access_token = "";
-  }
-
-  // +-user:" + CONTRIBUTOR + "
-  return "?q=type:pr+author:" + CONTRIBUTOR + checkRepo +
-  "&sort=created&order=asc&per_page=1" + access_token;
+function buildUrl({base, q: {type, filterUser, author, repo}, sort, order, per_page, access_token}) {
+  let query = `${base}?q=`;
+  query += `${author ? `+author:${author}`: ""}`;
+  query += `${repo ? `+repo:${repo}`: ""}`;
+  query += `${type ? `+type:${type}`: ""}`;
+  query += `${filterUser ? `+-user:${filterUser}`: ""}`;
+  query += `${access_token ? `&access_token=${access_token}`: ""}`;
+  query += `${order ? `&order=${order}`: ""}`;
+  query += `${per_page ? `&per_page=${per_page}`: ""}`;
+  query += `${sort ? `&sort=${sort}`: ""}`;
+  return query;
 }
 
-function prCount(checkRepo, access_token) {
-  if (LOGGED_IN_USER === CONTRIBUTOR) {
-    return;
-  }
-
-  let searchURL = BASE_URL + queryParams(checkRepo, access_token);
-  // console.log(searchURL);
+function prCount(access_token) {
+  let searchURL = buildUrl({
+    access_token,
+    base: "https://api.github.com/search/issues",
+    order: "asc",
+    per_page: "1",
+    q: {
+      type: "pr",
+      author: CONTRIBUTOR,
+      repo: ORG_REPO_PATH
+    },
+    sort: "created"
+  });
 
   return fetch(searchURL)
   .then((res) => res.json())
   .then(function(json) {
-    // console.log("parsed json", json);
-
     if (json.errors) {
       return json;
     }
 
     let obj = {
-      prs: json.total_count,
+      prs: json.total_count
     };
 
     if (json.items && json.items.length) {
       obj.firstPRNumber = json.items[0].number;
     }
 
-    setSyncStorage({
-      [CONTRIBUTOR]: {
-        [ORG_REPO_PATH]: {
-          prs: obj.prs,
-          firstPRNumber: obj.firstPRNumber
-        }
-      }
+    setStorage(CONTRIBUTOR, ORG_REPO_PATH, {
+      prs: obj.prs,
+      firstPRNumber: obj.firstPRNumber
     });
 
     return obj;
@@ -98,7 +91,8 @@ function prCount(checkRepo, access_token) {
 function showInfo(repoInfo) {
   let repoPrs = repoInfo.prs;
   let repoText = `${repoPrs} PRs `;
-  if (repoInfo  .firstPRNumber === +CURRENT_PR) {
+
+  if (repoInfo.firstPRNumber === +CURRENT_PR) {
     repoText = "First PR";
     if (repoPrs > 1) {
       repoText += ` out of ${repoPrs} (to the repo)`;
@@ -118,12 +112,8 @@ function addContributorInfo(text) {
     updateNode.id = "gce-update";
     updateNode.text = "[Update #PRs]";
     updateNode.addEventListener("click", function() {
-      setSyncStorage({
-        [CONTRIBUTOR]: {
-          [ORG_REPO_PATH]: {
-            prs: null
-          }
-        }
+      setStorage(CONTRIBUTOR, ORG_REPO_PATH, {
+        prs: null
       });
       update();
     });
@@ -148,19 +138,15 @@ function update() {
   })
   .then((shouldShow) => {
     if (shouldShow) {
-      getSyncStorage({
-        [CONTRIBUTOR]: {
-          [ORG_REPO_PATH]: {}
-        }
-      })
+      getStorage(CONTRIBUTOR, ORG_REPO_PATH)
       .then((storage) => {
-        let storageRes = storage[CONTRIBUTOR][ORG_REPO_PATH];
+        let storageRes = storage[`user:${CONTRIBUTOR}`][ORG_REPO_PATH];
         if (storageRes.prs) {
           showInfo(storageRes);
         } else {
           getSyncStorage({ "access_token": null })
           .then((res) => {
-            prCount(true, res.access_token)
+            prCount(res.access_token)
             .then((repoInfo) => {
               if (repoInfo.errors) {
                 addContributorInfo(repoInfo.errors[0].message);
