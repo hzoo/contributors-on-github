@@ -2,7 +2,7 @@
 
 /* global chrome, getSyncStorage, setStorage, getStorage */
 
-let CURRENT_PR, ORG_REPO_PATH, FIRST_HEADER, LOGGED_IN_USER, CONTRIBUTOR;
+let CURRENT_PR, ORG_REPO_PATH, FIRST_HEADER, CONTRIBUTOR;
 
 function loadConsts() {
   // "/babel/babel-eslint/pull/1"
@@ -17,9 +17,6 @@ function loadConsts() {
   if (FIRST_HEADER) {
     FIRST_HEADER.style.maxWidth = "initial";
   }
-
-  LOGGED_IN_USER =
-  document.querySelector(".js-menu-target").getAttribute("href").slice(1) || "";
 
   CONTRIBUTOR =
   document.querySelector(".timeline-comment-wrapper .timeline-comment-header-text strong");
