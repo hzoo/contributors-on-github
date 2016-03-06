@@ -22,9 +22,6 @@ You can click on `[Update PRs]` to update the number if it has changed (since th
 
 You may want to create or get a "access token" that uses the `public_repo` permission if you want to use a 30/min rate limit instead of 10/min (might not be necessary).
 
-If you don't want this to run on all repos, you can add some orgs or specific repos for this script to run on.
-- [ ] A potential feature request would be to run another request to automatically add all orgs of the user to the list.
-
 <img src="options.png" alt="options" width="400px" height="400px">
 
 #### Permissions
@@ -48,7 +45,7 @@ You should see
 
 Now try it out!
 
-You can also click on the Options to set your token and repos if you need to!
+You can also click on the Options to set your `access_token` if you need to!
 
 Used https://github.com/GoogleChrome/chrome-app-samples/tree/master/samples/github-auth, https://github.com/ekonstantinidis/gitify, https://github.com/sindresorhus/notifier-for-github-chrome for reference.
 

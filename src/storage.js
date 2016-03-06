@@ -28,7 +28,7 @@ window.setSyncStorage = promisify(chrome.storage.sync.set.bind(chrome.storage.sy
 
 window.setStorage = (CONTRIBUTOR, ORG_REPO_PATH, value) => {
   return setSyncStorage({
-    [`user:${CONTRIBUTOR}`]: {
+    [CONTRIBUTOR]: {
       [ORG_REPO_PATH]: value
     }
   });
@@ -36,7 +36,7 @@ window.setStorage = (CONTRIBUTOR, ORG_REPO_PATH, value) => {
 
 window.getStorage = (CONTRIBUTOR, ORG_REPO_PATH) => {
   return getSyncStorage({
-    [`user:${CONTRIBUTOR}`]: {
+    [CONTRIBUTOR]: {
       [ORG_REPO_PATH]: {}
     }
   });

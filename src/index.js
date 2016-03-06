@@ -121,45 +121,23 @@ function addContributorInfo(text) {
 }
 
 function update() {
-  getSyncStorage({ repos: "" })
+  getStorage(CONTRIBUTOR, ORG_REPO_PATH)
   .then((storage) => {
-    if (storage.repos) {
-      let storageRepos = storage.repos.split("\n");
-      return storageRepos.some((storageRepo) => {
-        if (storageRepo.indexOf("/") >= 0) {
-          return storageRepo.indexOf(ORG_REPO_PATH) >= 0;
-        } else {
-          return storageRepo.indexOf(ORG) >= 0;
-        }
-      });
+    let storageRes = storage[CONTRIBUTOR][ORG_REPO_PATH];
+    if (storageRes.prs) {
+      showInfo(storageRes);
     } else {
-      return true;
-    }
-  })
-  .then((shouldShow) => {
-    if (shouldShow) {
-      getStorage(CONTRIBUTOR, ORG_REPO_PATH)
-      .then((storage) => {
-        let storageRes = storage[`user:${CONTRIBUTOR}`][ORG_REPO_PATH];
-        if (storageRes.prs) {
-          showInfo(storageRes);
-        } else {
-          getSyncStorage({ "access_token": null })
-          .then((res) => {
-            prCount(res.access_token)
-            .then((repoInfo) => {
-              if (repoInfo.errors) {
-                addContributorInfo(repoInfo.errors[0].message);
-                return;
-              }
-              showInfo(repoInfo);
-            });
-          });
-        }
+      getSyncStorage({ "access_token": null })
+      .then((res) => {
+        prCount(res.access_token)
+        .then((repoInfo) => {
+          if (repoInfo.errors) {
+            addContributorInfo(repoInfo.errors[0].message);
+            return;
+          }
+          showInfo(repoInfo);
+        });
       });
-    } else {
-      let linkNode = document.querySelector("#gce-num-prs");
-      linkNode.text = "[Filtered Repo]";
     }
   });
 }
