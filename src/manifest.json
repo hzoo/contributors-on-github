@@ -2,6 +2,9 @@
   "name": "Github Contributor Stats",
   "description": "Show Github Contributor Stats",
   "version": "0.0.1",
+  "icons": {
+    "128": "icon-128.png"
+  },
   "permissions": [
     "activeTab",
     "storage",

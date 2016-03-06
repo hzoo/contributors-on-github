@@ -2,13 +2,13 @@
 
 /* global chrome, getSyncStorage, setStorage, getStorage */
 
-let ORG, REPO, CURRENT_PR, ORG_REPO_PATH, FIRST_HEADER, LOGGED_IN_USER, CONTRIBUTOR;
+let CURRENT_PR, ORG_REPO_PATH, FIRST_HEADER, LOGGED_IN_USER, CONTRIBUTOR;
 
 function loadConsts() {
   // "/babel/babel-eslint/pull/1"
   let pathNameArr = window.location.pathname.split("/");
-  ORG = pathNameArr[1]; // babel
-  REPO = pathNameArr[2]; // babel-eslint
+  let ORG = pathNameArr[1]; // babel
+  let REPO = pathNameArr[2]; // babel-eslint
   CURRENT_PR = pathNameArr[4]; // 3390
   ORG_REPO_PATH = ORG + "/" + REPO; // babel/babel-eslint
 
@@ -102,7 +102,7 @@ function injectPRText() {
     let linkNode = FIRST_HEADER.appendChild(document.createElement("a"));
     linkNode.id = "gce-num-prs";
     linkNode.href =
-    `https://github.com/${ORG_REPO_PATH}/pulls?utf8=%E2%9C%93&q=is%3Aboth+is%3Apr+author%3A${CONTRIBUTOR}`;
+    `https://github.com/${ORG_REPO_PATH}/pulls?utf8=%E2%9C%93&q=is:both+is:pr+author:${CONTRIBUTOR}`;
     linkNode.text = "Loading # of PRs...";
   }
 }
