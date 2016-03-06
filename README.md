@@ -22,7 +22,7 @@ You can click on `[Update PRs]` to update the number if it has changed (since th
 
 You may want to create or get a "access token" that uses the `public_repo` permission if you want to use a 30/min rate limit instead of 10/min (might not be necessary).
 
-<img src="options.png" alt="options" width="400px" height="400px">
+<img src="options.png" alt="options" height="300px">
 
 #### Permissions
 - "activeTab": to add the first PR text to the active tab
