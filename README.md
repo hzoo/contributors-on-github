@@ -33,7 +33,7 @@ If necessary, you may want to create or get a "access token" that uses the `publ
 #### Local Install
 - Download the zip, and unzip it
 
-![](load-extension.png)
+<img src="load-extension.png" alt="local install instructions" height="150px">
 
 - Go to [`chrome://extensions/`](chrome://extensions/)
 - Click on `Load unpacked extension...`
