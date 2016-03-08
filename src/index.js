@@ -2,6 +2,10 @@
 
 /* global chrome, getSyncStorage, setStorage, getStorage */
 
+const path = location.pathname;
+const isPR = () => /^\/[^/]+\/[^/]+\/pull\/\d+/.test(path);
+const isIssue = () => /^\/[^/]+\/[^/]+\/issues\/\d+/.test(path);
+
 let CURRENT_PR, ORG_REPO_PATH, FIRST_HEADER, CONTRIBUTOR;
 
 function loadConsts() {
@@ -12,12 +16,6 @@ function loadConsts() {
   CURRENT_PR = pathNameArr[4]; // 3390
   ORG_REPO_PATH = ORG + "/" + REPO; // babel/babel-eslint
 
-  FIRST_HEADER =
-  document.querySelector(".timeline-comment-wrapper .timeline-comment-header-text");
-  if (FIRST_HEADER) {
-    FIRST_HEADER.style.maxWidth = "initial";
-  }
-
   CONTRIBUTOR =
   document.querySelector(".timeline-comment-wrapper .timeline-comment-header-text strong");
 
@@ -25,8 +23,13 @@ function loadConsts() {
     CONTRIBUTOR = CONTRIBUTOR.innerText.trim();
   }
 
-  injectPRText();
-  injectUpdateText();
+  FIRST_HEADER =
+  document.querySelector(".timeline-comment-wrapper .timeline-comment-header-text");
+  if (FIRST_HEADER) {
+    FIRST_HEADER.style.maxWidth = "initial";
+    injectPRText(FIRST_HEADER);
+    injectUpdateText(FIRST_HEADER);
+  }
 }
 
 function buildUrl({base, q: {type, filterUser, author, repo}, sort, order, per_page, access_token}) {
@@ -94,9 +97,9 @@ function setPRText(repoInfo) {
   return PRText;
 }
 
-function injectPRText() {
+function injectPRText(node) {
   if (!document.querySelector("#gce-num-prs")) {
-    let linkNode = FIRST_HEADER.appendChild(document.createElement("a"));
+    let linkNode = node.appendChild(document.createElement("a"));
     linkNode.id = "gce-num-prs";
     linkNode.href =
     `https://github.com/${ORG_REPO_PATH}/pulls?utf8=%E2%9C%93&q=is:both+is:pr+author:${CONTRIBUTOR}`;
@@ -104,9 +107,9 @@ function injectPRText() {
   }
 }
 
-function injectUpdateText() {
+function injectUpdateText(node) {
   if (!document.querySelector("#gce-update")) {
-    let updateNode = FIRST_HEADER.appendChild(document.createElement("a"));
+    let updateNode = node.appendChild(document.createElement("a"));
     updateNode.style = "float: right";
     updateNode.id = "gce-update";
     updateNode.text = "[Update #PRs]";
@@ -145,16 +148,11 @@ function update() {
   });
 }
 
-if (window.location.href.match(/https?:\/\/(www\.)?github\.com\/[\w-.]+\/[\w-.]+\/pull\/\d+/)) {
-  loadConsts();
-  if (CONTRIBUTOR) update();
-}
-
-chrome.runtime.onMessage.addListener(() => {
-  // not sure why it fires 2 onHistoryStateUpdated updates
-  // the first one is before DOM loads?
-  if (document.querySelector(".timeline-comment-wrapper")) {
-    loadConsts();
-    if (CONTRIBUTOR) update();
+document.addEventListener("DOMContentLoaded", () => {
+  if (isPR()) {
+    gitHubInjection(window, () => {
+      loadConsts();
+      if (CONTRIBUTOR) update();
+    });
   }
 });
