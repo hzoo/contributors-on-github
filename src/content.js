@@ -149,7 +149,7 @@ function update() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  if (isPR()) {
+  if (isPR() || isIssue()) {
     gitHubInjection(window, () => {
       loadConsts();
       if (CONTRIBUTOR) update();

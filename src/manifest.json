@@ -29,7 +29,7 @@
       "js": [
         "storage.js",
         "vendor/github-injection.js",
-        "index.js"
+        "content.js"
       ]
     }
   ],
