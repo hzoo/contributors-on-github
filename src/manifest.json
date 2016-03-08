@@ -1,6 +1,7 @@
 {
-  "name": "Github Contributor Stats",
+  "name": "Contributor Stats on Github",
   "description": "Show Github Contributor Stats",
+  "homepage_url": "https://github.com/hzoo/contributor-stats-on-github",
   "version": "0.0.1",
   "icons": {
     "128": "icon-128.png"
