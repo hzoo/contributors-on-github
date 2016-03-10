@@ -4,6 +4,7 @@
 
 const isPR = (path) => /^\/[^/]+\/[^/]+\/pull\/\d+/.test(path);
 const isIssue = (path) => /^\/[^/]+\/[^/]+\/issues\/\d+/.test(path);
+const getCurrentUser = () => document.querySelector('.js-menu-target img').alt.slice(1) || "";
 
 function getContributor() {
   let contributorNode = document.querySelector(".timeline-comment-wrapper .timeline-comment-header-text strong");
@@ -71,7 +72,7 @@ function prCount({access_token, contributor, repoPath}) {
   return fetch(searchURL)
   .then((res) => res.json())
   .then(function(json) {
-    if (json.errors) {
+    if (json.errors || json.message) {
       return json;
     }
 
@@ -83,10 +84,12 @@ function prCount({access_token, contributor, repoPath}) {
       obj.firstPRNumber = json.items[0].number;
     }
 
-    setStorage(contributor, repoPath, {
-      prs: obj.prs,
-      firstPRNumber: obj.firstPRNumber
-    });
+    if (obj.prs) {
+      setStorage(contributor, repoPath, {
+        prs: obj.prs,
+        firstPRNumber: obj.firstPRNumber
+      });
+    }
 
     return obj;
   });
@@ -132,7 +135,10 @@ function injectUpdateText({ contributor, headerNode, repoPath }) {
 }
 
 function updatePRText(text) {
-  document.querySelector("#gce-num-prs").text = text;
+  let prText = document.querySelector("#gce-num-prs");
+  if (prText) {
+    prText.text = text;
+  }
 }
 
 function update({ contributor, headerNode, repoPath, currentPR }) {
@@ -149,6 +155,22 @@ function update({ contributor, headerNode, repoPath, currentPR }) {
           if (repoInfo.errors) {
             updatePRText(repoInfo.errors[0].message);
             return;
+          }
+
+          if (repoInfo.message) {
+            // API rate limit exceeded for hzoo.
+            if (repoInfo.message.indexOf(`API rate limit exceeded for ${getCurrentUser()}`) >= 0) {
+              updatePRText("More than 30 req/min :D");
+              return;
+            }
+
+            // API rate limit exceeded for x.x.x.x.
+            // (But here's the good news: Authenticated requests get a higher rate limit.
+            // Check out the documentation for more details.)
+            if (repoInfo.message.indexOf("the good news") >= 0) {
+              updatePRText("More than 10 req/min: Maybe add a access_token!");
+              return;
+            }
           }
           updatePRText(setPRText(currentPR, repoInfo));
         });
