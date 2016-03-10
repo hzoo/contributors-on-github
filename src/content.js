@@ -2,34 +2,43 @@
 
 /* global chrome, getSyncStorage, setStorage, getStorage */
 
-const path = location.pathname;
-const isPR = () => /^\/[^/]+\/[^/]+\/pull\/\d+/.test(path);
-const isIssue = () => /^\/[^/]+\/[^/]+\/issues\/\d+/.test(path);
+const isPR = (path) => /^\/[^/]+\/[^/]+\/pull\/\d+/.test(path);
+const isIssue = (path) => /^\/[^/]+\/[^/]+\/issues\/\d+/.test(path);
 
-let CURRENT_PR, ORG_REPO_PATH, FIRST_HEADER, CONTRIBUTOR;
+function getContributor() {
+  let contributorNode = document.querySelector(".timeline-comment-wrapper .timeline-comment-header-text strong");
+  if (contributorNode) {
+    return contributorNode.innerText.trim();
+  }
+}
 
-function loadConsts() {
+function getContributorInfo() {
   // "/babel/babel-eslint/pull/1"
-  let pathNameArr = window.location.pathname.split("/");
-  let ORG = pathNameArr[1]; // babel
-  let REPO = pathNameArr[2]; // babel-eslint
-  CURRENT_PR = pathNameArr[4]; // 3390
-  ORG_REPO_PATH = ORG + "/" + REPO; // babel/babel-eslint
+  let pathNameArr = location.pathname.split("/");
+  let org = pathNameArr[1]; // babel
+  let repo = pathNameArr[2]; // babel-eslint
+  let currentPR = pathNameArr[4]; // 3390
+  let repoPath = org + "/" + repo; // babel/babel-eslint
 
-  CONTRIBUTOR =
-  document.querySelector(".timeline-comment-wrapper .timeline-comment-header-text strong");
+  let contributor = getContributor();
 
-  if (CONTRIBUTOR) {
-    CONTRIBUTOR = CONTRIBUTOR.innerText.trim();
-  }
-
-  FIRST_HEADER =
+  let headerNode =
   document.querySelector(".timeline-comment-wrapper .timeline-comment-header-text");
-  if (FIRST_HEADER) {
-    FIRST_HEADER.style.maxWidth = "initial";
-    injectPRText(FIRST_HEADER);
-    injectUpdateText(FIRST_HEADER);
+
+  let ret = {
+    contributor,
+    currentPR,
+    headerNode,
+    repoPath
+  };
+
+  if (headerNode) {
+    headerNode.style.maxWidth = "initial";
+    injectPRText(ret);
+    injectUpdateText(ret);
   }
+
+  return ret;
 }
 
 function buildUrl({base, q: {type, filterUser, author, repo}, sort, order, per_page, access_token}) {
@@ -45,7 +54,7 @@ function buildUrl({base, q: {type, filterUser, author, repo}, sort, order, per_p
   return query;
 }
 
-function prCount(access_token) {
+function prCount({access_token, contributor, repoPath}) {
   let searchURL = buildUrl({
     access_token,
     base: "https://api.github.com/search/issues",
@@ -53,8 +62,8 @@ function prCount(access_token) {
     per_page: "1",
     q: {
       type: "pr",
-      author: CONTRIBUTOR,
-      repo: ORG_REPO_PATH
+      author: contributor,
+      repo: repoPath
     },
     sort: "created"
   });
@@ -74,7 +83,7 @@ function prCount(access_token) {
       obj.firstPRNumber = json.items[0].number;
     }
 
-    setStorage(CONTRIBUTOR, ORG_REPO_PATH, {
+    setStorage(contributor, repoPath, {
       prs: obj.prs,
       firstPRNumber: obj.firstPRNumber
     });
@@ -83,11 +92,11 @@ function prCount(access_token) {
   });
 }
 
-function setPRText(repoInfo) {
+function setPRText(currentPR, repoInfo) {
   let {prs, firstPRNumber} = repoInfo;
   let PRText = `${prs} PRs `;
 
-  if (firstPRNumber === +CURRENT_PR) {
+  if (firstPRNumber === +currentPR) {
     PRText = "First PR";
     if (prs > 1) {
       PRText += ` out of ${prs} (to the repo)`;
@@ -97,27 +106,27 @@ function setPRText(repoInfo) {
   return PRText;
 }
 
-function injectPRText(node) {
+function injectPRText({ contributor, headerNode, repoPath }) {
   if (!document.querySelector("#gce-num-prs")) {
-    let linkNode = node.appendChild(document.createElement("a"));
+    let linkNode = headerNode.appendChild(document.createElement("a"));
     linkNode.id = "gce-num-prs";
     linkNode.href =
-    `https://github.com/${ORG_REPO_PATH}/pulls?utf8=%E2%9C%93&q=is:both+is:pr+author:${CONTRIBUTOR}`;
+    `https://github.com/${repoPath}/pulls?utf8=%E2%9C%93&q=is:both+is:pr+author:${contributor}`;
     linkNode.text = "Loading # of PRs...";
   }
 }
 
-function injectUpdateText(node) {
+function injectUpdateText({ contributor, headerNode, repoPath }) {
   if (!document.querySelector("#gce-update")) {
-    let updateNode = node.appendChild(document.createElement("a"));
+    let updateNode = headerNode.appendChild(document.createElement("a"));
     updateNode.style = "float: right";
     updateNode.id = "gce-update";
     updateNode.text = "[Update #PRs]";
     updateNode.addEventListener("click", function() {
-      setStorage(CONTRIBUTOR, ORG_REPO_PATH, {
+      setStorage(contributor, repoPath, {
         prs: null
       });
-      update();
+      update(getContributorInfo());
     });
   }
 }
@@ -126,22 +135,22 @@ function updatePRText(text) {
   document.querySelector("#gce-num-prs").text = text;
 }
 
-function update() {
-  getStorage(CONTRIBUTOR, ORG_REPO_PATH)
+function update({ contributor, headerNode, repoPath, currentPR }) {
+  getStorage(contributor, repoPath)
   .then((storage) => {
-    let storageRes = storage[CONTRIBUTOR][ORG_REPO_PATH];
+    let storageRes = storage[contributor][repoPath];
     if (storageRes.prs) {
-      updatePRText(setPRText(storageRes));
+      updatePRText(setPRText(currentPR, storageRes));
     } else {
       getSyncStorage({ "access_token": null })
       .then((res) => {
-        prCount(res.access_token)
+        prCount({ access_token: res.access_token, contributor, repoPath})
         .then((repoInfo) => {
           if (repoInfo.errors) {
             updatePRText(repoInfo.errors[0].message);
             return;
           }
-          updatePRText(setPRText(repoInfo));
+          updatePRText(setPRText(currentPR, repoInfo));
         });
       });
     }
@@ -149,10 +158,11 @@ function update() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  if (isPR() || isIssue()) {
-    gitHubInjection(window, () => {
-      loadConsts();
-      if (CONTRIBUTOR) update();
-    });
-  }
+  gitHubInjection(window, () => {
+    if (isPR(location.pathname) || isIssue(location.pathname)) {
+      if (getContributor()) {
+        update(getContributorInfo());
+      }
+    };
+  });
 });
