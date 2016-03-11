@@ -4,12 +4,12 @@
 
 const isPR = (path) => /^\/[^/]+\/[^/]+\/pull\/\d+/.test(path);
 const isIssue = (path) => /^\/[^/]+\/[^/]+\/issues\/\d+/.test(path);
-const getCurrentUser = () => document.querySelector('.js-menu-target img').alt.slice(1) || "";
+const getCurrentUser = () => $('.js-menu-target img').attr('alt').slice(1) || "";
 
 function getContributor() {
-  let contributorNode = document.querySelector(".timeline-comment-wrapper .timeline-comment-header-text strong");
-  if (contributorNode) {
-    return contributorNode.innerText.trim();
+  let $contributor = $(".timeline-comment-wrapper .timeline-comment-header-text strong");
+  if ($contributor.length) {
+    return $contributor.first().text().trim();
   }
 }
 
@@ -20,24 +20,15 @@ function getContributorInfo() {
   let repo = pathNameArr[2]; // babel-eslint
   let currentPR = pathNameArr[4]; // 3390
   let repoPath = org + "/" + repo; // babel/babel-eslint
-
   let contributor = getContributor();
 
-  let headerNode =
-  document.querySelector(".timeline-comment-wrapper .timeline-comment-header-text");
-
   let ret = {
-    contributor,
+    contributor: getContributor(),
     currentPR,
-    headerNode,
     repoPath
   };
 
-  if (headerNode) {
-    headerNode.style.maxWidth = "initial";
-    injectPRText(ret);
-    injectUpdateText(ret);
-  }
+  injectInitialUI(ret);
 
   return ret;
 }
@@ -109,23 +100,24 @@ function setPRText(currentPR, repoInfo) {
   return PRText;
 }
 
-function injectPRText({ contributor, headerNode, repoPath }) {
-  if (!document.querySelector("#gce-num-prs")) {
-    let linkNode = headerNode.appendChild(document.createElement("a"));
-    linkNode.id = "gce-num-prs";
-    linkNode.href =
-    `https://github.com/${repoPath}/pulls?utf8=%E2%9C%93&q=is:both+is:pr+author:${contributor}`;
-    linkNode.text = "Loading # of PRs...";
-  }
+function makeLabel(text) {
+  return `<span class="timeline-comment-label">${text}</span>`;
 }
 
-function injectUpdateText({ contributor, headerNode, repoPath }) {
-  if (!document.querySelector("#gce-update")) {
-    let updateNode = headerNode.appendChild(document.createElement("a"));
-    updateNode.style = "float: right";
-    updateNode.id = "gce-update";
-    updateNode.text = "[Update #PRs]";
-    updateNode.addEventListener("click", function() {
+function injectInitialUI({ contributor, repoPath }) {
+  if ($("#gce-num-prs").length) return;
+
+  let $elem = $(".timeline-comment-header-text").first();
+  let id = "gce-num-prs";
+  let prText = makeLabel("Loading # of PRs...");
+  let updateText = makeLabel("Update PRs");
+
+  if (!$(id).length) {
+    $elem.before(`<a href="/${repoPath}/pulls?utf8=%E2%9C%93&q=is:both+is:pr+author:${contributor}" id="${id}">${prText}</a>`);
+    $elem.before(`<a style="cursor:pointer;" id="gce-update">${updateText}</a>`);
+
+    let $update = $("#gce-update");
+    $update.dom[0].addEventListener("click", function() {
       setStorage(contributor, repoPath, {
         prs: null
       });
@@ -135,13 +127,13 @@ function injectUpdateText({ contributor, headerNode, repoPath }) {
 }
 
 function updatePRText(text) {
-  let prText = document.querySelector("#gce-num-prs");
-  if (prText) {
-    prText.text = text;
+  let prText = $("#gce-num-prs .timeline-comment-label");
+  if (prText.length) {
+    prText.text(text);
   }
 }
 
-function update({ contributor, headerNode, repoPath, currentPR }) {
+function update({ contributor, repoPath, currentPR }) {
   getStorage(contributor, repoPath)
   .then((storage) => {
     let storageRes = storage[contributor][repoPath];

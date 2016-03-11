@@ -29,6 +29,7 @@
       "js": [
         "storage.js",
         "vendor/github-injection.js",
+        "vendor/sprint.min.js",
         "content.js"
       ]
     }
