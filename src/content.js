@@ -46,14 +46,14 @@ function buildUrl({base, q: {type, filterUser, author, repo}, sort, order, per_p
   return query;
 }
 
-function prCount({access_token, contributor, repoPath}) {
+function contributorCount({access_token, contributor, repoPath, type}) {
   let searchURL = buildUrl({
     access_token,
     base: "https://api.github.com/search/issues",
     order: "asc",
     per_page: "1",
     q: {
-      type: "pr",
+      type,
       author: contributor,
       repo: repoPath
     },
@@ -142,7 +142,7 @@ function update({ contributor, repoPath, currentPR }) {
     } else {
       getSyncStorage({ "access_token": null })
       .then((res) => {
-        prCount({ access_token: res.access_token, contributor, repoPath})
+        contributorCount({ access_token: res.access_token, type: "pr", contributor, repoPath})
         .then((repoInfo) => {
           if (repoInfo.errors) {
             updatePRText(repoInfo.errors[0].message);
