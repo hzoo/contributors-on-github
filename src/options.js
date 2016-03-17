@@ -2,6 +2,7 @@
 
 document.addEventListener("DOMContentLoaded", () => {
   const accessTokenInput = document.getElementById("token-input");
+  const oauthLink = document.getElementById("use-oauth");
 
   getSyncStorage({ "access_token": null })
   .then(({ access_token }) => {
@@ -11,4 +12,8 @@ document.addEventListener("DOMContentLoaded", () => {
   accessTokenInput.addEventListener("change", () => {
     setSyncStorage({ "access_token": accessTokenInput.value });
   });
+
+  oauthLink.addEventListener("click", () => {
+    getTokenFromOauth();
+  })
 });

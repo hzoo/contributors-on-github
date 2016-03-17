@@ -1,0 +1,8 @@
+#gce-update-time {
+  display: none;
+}
+
+#gce-update:hover ~ #gce-update-time,
+#gce-num-prs:hover ~ #gce-update-time {
+  display: block;
+}

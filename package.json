@@ -1,7 +1,0 @@
-{
-  "name": "github-contributor-extension",
-  "private": true,
-  "description": "Mainly to show if it's a contributors first PR.",
-  "author": "Henry Zhu",
-  "license": "MIT"
-}

@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Github Contributor Stats</title>
+    <title>Contributor Stats on Github</title>
     <style>
       input[type='text'] {
         width: 100%;
@@ -10,18 +10,31 @@
         font-size: 16px;
         text-align: center;
       }
+      .description {
+        text-align: center;
+      }
+      #feedback {
+        background-color: #f0ad4e;
+        text-align: center;
+      }
     </style>
+    <script src="vendor/query-string.js"></script>
+    <script src="auth.js"></script>
     <script src="storage.js"></script>
     <script src="options.js"></script>
   </head>
   <body>
     <section>
-      <h1>API access</h1>
-      <p class="description">If you are hitting the rate limit, you can <a id="gh_link" href="https://github.com/settings/tokens/new?scopes=public_repo&description=Github Contributor Stats" target="gh_target">create a github auth token</a> with the <strong>"public_repo"</strong> permission.</p>
+      <h1 class="description">
+        <a id="use-oauth">Use OAuth</a>
+      </h1>
+      <p class="description">Or</p>
+      <p class="description"> <a id="gh_link" href="https://github.com/settings/tokens/new?scopes=public_repo&description=Contributor Stats on Github" target="gh_target">Create a github auth token</a> with the <strong>"public_repo"</strong> permission.</p>
       <h1>Access Token</h1>
       <input type="text" id="token-input" placeholder="Paste your access token here">
+      <p id="feedback"></p>
     </section>
-    <h3>Github's Search API Rate Limit</h3>
+    <h5>Github's Search API Rate Limit</h5>
     <section>
       <div>10/min for non-authenticated requests.</div>
       <div>30/min for authenticated requests</div>

@@ -1,4 +1,4 @@
-# GitHub Contributior Extension
+# Contributor Stats on Github
 
 > Mainly to show if it's a contributors first PR (right now it's specific to the repo, not in general).
 
@@ -44,10 +44,6 @@ If necessary, you may want to create or get a "access token" that uses the `publ
 - Go to [`chrome://extensions/`](chrome://extensions/)
 - Click on `Load unpacked extension...`
 - Select the `src` folder of the unzipped folder you downloaded
-
-You should see
-
-![](chrome-entry.png)
 
 Now try it out!
 
