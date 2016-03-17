@@ -34,6 +34,16 @@ window.setStorage = (CONTRIBUTOR, ORG_REPO_PATH, value) => {
   });
 };
 
+window.setStorageProperty = (CONTRIBUTOR, ORG_REPO_PATH, prop, value) => {
+  return window.setSyncStorage({
+    [CONTRIBUTOR]: {
+      [ORG_REPO_PATH]: {
+        [prop]: value
+      }
+    }
+  });
+};
+
 window.getStorage = (CONTRIBUTOR, ORG_REPO_PATH) => {
   return window.getSyncStorage({
     [CONTRIBUTOR]: {
