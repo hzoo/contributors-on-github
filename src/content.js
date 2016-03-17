@@ -68,7 +68,8 @@ function contributorCount({access_token, contributor, repoPath, type}) {
     }
 
     let obj = {
-      prs: json.total_count
+      prs: json.total_count,
+      lastUpdate: Date.now()
     };
 
     if (json.items && json.items.length) {
@@ -76,32 +77,34 @@ function contributorCount({access_token, contributor, repoPath, type}) {
     }
 
     if (obj.prs) {
-      setStorage(contributor, repoPath, {
-        prs: obj.prs,
-        firstPRNumber: obj.firstPRNumber
-      });
+      setStorage(contributor, repoPath, obj);
     }
 
     return obj;
   });
 }
 
-function setPRText(currentPR, repoInfo) {
+function appendPRText(currentPR, repoInfo) {
   let {prs, firstPRNumber} = repoInfo;
-  let PRText = `${prs} PRs `;
+  let text = `${prs} PRs`;
 
   if (firstPRNumber === +currentPR) {
-    PRText = "First PR";
+    text = "First PR";
     if (prs > 1) {
-      PRText += ` out of ${prs} (to the repo)`;
+      text += ` out of ${prs} (to the repo)`;
     }
   }
 
-  return PRText;
+  repoInfo.text = text;
+  return repoInfo;
 }
 
 function makeLabel(text) {
   return `<span class="timeline-comment-label">${text}</span>`;
+}
+
+function makeUpdateLabel(time) {
+  return `<time datetime="${time}" is="relative-time"></time>`;
 }
 
 function injectInitialUI({ contributor, repoPath }) {
@@ -109,27 +112,30 @@ function injectInitialUI({ contributor, repoPath }) {
 
   let $elem = $(".timeline-comment-header-text").first();
   let id = "gce-num-prs";
-  let prText = makeLabel("Loading # of PRs...");
-  let updateText = makeLabel("Update PRs");
+  let prText = makeLabel("Loading # of PRs..");
+  let updateText = makeLabel("🔄 PRs");
 
   if (!$(id).length) {
     $elem.before(`<a href="/${repoPath}/pulls?utf8=%E2%9C%93&q=is:both+is:pr+author:${contributor}" id="${id}">${prText}</a>`);
     $elem.before(`<a style="cursor:pointer;" id="gce-update">${updateText}</a>`);
+    $elem.before(`<a id="gce-update-time" class="timeline-comment-label">N/A</a>`);
 
     let $update = $("#gce-update");
     $update.dom[0].addEventListener("click", function() {
-      setStorage(contributor, repoPath, {
-        prs: null
-      });
+      setStorage(contributor, repoPath, {});
       update(getContributorInfo());
     });
   }
 }
 
-function updatePRText(text) {
+function updatePRText({ text, lastUpdate }) {
   let prText = $("#gce-num-prs .timeline-comment-label");
   if (prText.length) {
     prText.text(text);
+  }
+  let updateTime = $("#gce-update-time");
+  if (updateTime && typeof lastUpdate === "number") {
+    updateTime.html(`<span>Last Updated </span>${makeUpdateLabel(new Date(lastUpdate))}`);
   }
 }
 
@@ -138,7 +144,7 @@ function update({ contributor, repoPath, currentPR }) {
   .then((storage) => {
     let storageRes = storage[contributor][repoPath];
     if (storageRes.prs) {
-      updatePRText(setPRText(currentPR, storageRes));
+      updatePRText(appendPRText(currentPR, storageRes));
     } else {
       getSyncStorage({ "access_token": null })
       .then((res) => {
@@ -164,7 +170,7 @@ function update({ contributor, repoPath, currentPR }) {
               return;
             }
           }
-          updatePRText(setPRText(currentPR, repoInfo));
+          updatePRText(appendPRText(currentPR, repoInfo));
         });
       });
     }

@@ -28,6 +28,9 @@
       "matches": [
         "https://github.com/*/*"
       ],
+      "css": [
+        "content.css"
+      ],
       "js": [
         "storage.js",
         "vendor/github-injection.js",
