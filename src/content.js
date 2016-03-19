@@ -47,7 +47,7 @@ function buildUrl({base, q: {type, filterUser, author, repo}, sort, order, per_p
   return query;
 }
 
-function contributorCount({access_token, contributor, repoPath, type}) {
+function contributorCount({access_token, contributor, repoPath, old = {}, type}) {
   let searchURL = buildUrl({
     access_token,
     base: "https://api.github.com/search/issues",
@@ -82,15 +82,9 @@ function contributorCount({access_token, contributor, repoPath, type}) {
       obj[`first${type[0].toUpperCase() + type.slice(1)}Number`] = json.items[0].number;
     }
 
-    if (obj.prs) {
-      setStorageProperty(contributor, repoPath, "lastUpdate", obj.lastUpdate);
-      setStorageProperty(contributor, repoPath, "prs", obj.prs);
-      setStorageProperty(contributor, repoPath, "firstPrNumber", obj.firstPrNumber);
-    } else if (obj.issues) {
-      setStorageProperty(contributor, repoPath, "lastUpdate", obj.lastUpdate);
-      setStorageProperty(contributor, repoPath, "issues", obj.issues);
-      setStorageProperty(contributor, repoPath, "firstIssueNumber", obj.firstIssueNumber);
-    }
+    obj = Object.assign(old, obj);
+
+    setStorage(contributor, repoPath, obj);
 
     return obj;
   });
@@ -182,8 +176,8 @@ function update({ contributor, repoPath, currentNum }) {
       getSyncStorage({ "access_token": null })
       .then((res) => {
         Promise.all([
-          contributorCount({ access_token: res.access_token, type: "pr", contributor, repoPath}),
-          contributorCount({ access_token: res.access_token, type: "issue", contributor, repoPath})
+          contributorCount({ old: storageRes, access_token: res.access_token, type: "pr", contributor, repoPath}),
+          contributorCount({ old: storageRes, access_token: res.access_token, type: "issue", contributor, repoPath})
         ])
         .then(([prInfo, issueInfo]) => {
           let repoInfo = Object.assign(prInfo, issueInfo);
