@@ -25,6 +25,7 @@ function promisify(func) {
 
 window.getSyncStorage = promisify(chrome.storage.sync.get.bind(chrome.storage.sync));
 window.setSyncStorage = promisify(chrome.storage.sync.set.bind(chrome.storage.sync));
+window.clearSyncStorage = promisify(chrome.storage.sync.clear.bind(chrome.storage.sync));
 
 window.setStorage = (CONTRIBUTOR, ORG_REPO_PATH, value) => {
   return window.setSyncStorage({

@@ -3,6 +3,7 @@
 }
 
 #gce-update:hover ~ #gce-update-time,
-#gce-num-prs:hover ~ #gce-update-time {
+#gce-num-prs:hover ~ #gce-update-time,
+#gce-num-issues:hover ~ #gce-update-time {
   display: block;
 }

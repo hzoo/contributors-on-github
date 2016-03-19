@@ -1,10 +1,10 @@
+/* global chrome, queryString, getSyncStorage, setSyncStorage */
+
 const client_id = "1a3ac4d44a9e65a75a77";
 const client_secret = "ab3c3a116e35d9fe11d409cb8c1205e9ae5a7e91";
 const githubBaseUrl = "https://github.com/login/oauth/authorize";
 const githubTokenUrl = "https://github.com/login/oauth/access_token";
-const redirectUri = chrome.identity.getRedirectURL('provider_cb');
-
-console.log(redirectUri);
+const redirectUri = chrome.identity.getRedirectURL("provider_cb");
 
 const getAuthUrl = (base, callbackUrl, scope) => {
   let obj = {
@@ -15,7 +15,7 @@ const getAuthUrl = (base, callbackUrl, scope) => {
   };
 
   return `${base}?${queryString.stringify(obj)}`;
-}
+};
 
 function getTokenFromCode(code) {
   let obj = {
@@ -25,7 +25,7 @@ function getTokenFromCode(code) {
   };
 
   return fetch(`${githubTokenUrl}?${queryString.stringify(obj)}`)
-  .then((res) => res.text(), (err) => {
+  .then((res) => res.text(), () => {
     throw new Error("Failed to get access_token");
   });
 }
@@ -62,29 +62,29 @@ function getToken(url, interactive) {
             resolve(access_token);
           });
         } else {
-          reject(new Error ('neither access_token nor code available'));
+          reject(new Error ("neither access_token nor code available"));
         }
       } else {
-        reject(new Error('Invalid redirect URI'));
+        reject(new Error("Invalid redirect URI"));
       }
     });
   });
 }
 
 function getTokenFromOauth() {
-  getSyncStorage({ 'access_token': null })
+  getSyncStorage({ "access_token": null })
   .then((res) => {
     if (!res.access_token) {
-      const url = getAuthUrl(githubBaseUrl, redirectUri, 'public_repo');
+      const url = getAuthUrl(githubBaseUrl, redirectUri, "public_repo");
       getToken(url, true)
       .then((token) => {
-        setSyncStorage({ 'access_token': token });
+        setSyncStorage({ "access_token": token });
         const accessTokenInput = document.getElementById("token-input");
         accessTokenInput.value = token;
         document.querySelector("#feedback").textContent = "Access Token Set!";
       }, (message) => {
         document.querySelector("#feedback").textContent = message;
-      })
+      });
     } else {
       document.querySelector("#feedback").textContent = "Access Token Already Set!";
     }
