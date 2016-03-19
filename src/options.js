@@ -1,4 +1,4 @@
-/* global getSyncStorage, setSyncStorage */
+/* global getSyncStorage, setSyncStorage, clearSyncStorage, getTokenFromOauth */
 
 document.addEventListener("DOMContentLoaded", () => {
   const accessTokenInput = document.getElementById("token-input");
@@ -16,15 +16,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   oauthLink.addEventListener("click", () => {
     getTokenFromOauth();
-  })
+  });
 
   clearCacheLink.addEventListener("click", () => {
-    let temp = accessTokenInput.value
-    chrome.storage.sync.clear((res) => {
+    let temp = accessTokenInput.value;
+    clearSyncStorage()
+    .then(() => {
       setSyncStorage({ "access_token": temp });
-
       document.querySelector("#feedback").textContent = "Storage Cleared";
     });
-  })
+  });
 });
 

@@ -1,11 +1,11 @@
 "use strict";
 
-/* global chrome, getSyncStorage, setStorage, getStorage */
+/* global $, getSyncStorage, setStorage, getStorage, gitHubInjection */
 
 const isPR = (path) => /^\/[^/]+\/[^/]+\/pull\/\d+/.test(path);
 const isIssue = (path) => /^\/[^/]+\/[^/]+\/issues\/\d+/.test(path);
-const getCurrentUser = () => $('.js-menu-target img').attr('alt').slice(1) || "";
-const isPrivate = () => $('.repo-private-label').length > 0;
+const getCurrentUser = () => $(".js-menu-target img").attr("alt").slice(1) || "";
+const isPrivate = () => $(".repo-private-label").length > 0;
 
 function getContributor() {
   let $contributor = $(".timeline-comment-wrapper .timeline-comment-header-text strong");
@@ -24,7 +24,7 @@ function getContributorInfo() {
   let contributor = getContributor();
 
   let ret = {
-    contributor: getContributor(),
+    contributor,
     currentNum,
     repoPath
   };
@@ -217,6 +217,6 @@ document.addEventListener("DOMContentLoaded", () => {
       if (getContributor()) {
         update(getContributorInfo());
       }
-    };
+    }
   });
 });
