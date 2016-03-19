@@ -4,6 +4,9 @@
     <meta charset="utf-8">
     <title>Contributors on Github</title>
     <style>
+      section {
+        padding-bottom: 10px;
+      }
       input[type='text'] {
         width: 100%;
         height: 50px;
@@ -17,9 +20,8 @@
         background-color: #f0ad4e;
         text-align: center;
       }
-      #clear-cache {
-        text-align: center;
-        cursor: pointer;
+      .btn {
+        position:relative;display:inline-block;padding:6px 12px;font-size:13px;font-weight:bold;line-height:20px;color:#333;white-space:nowrap;vertical-align:middle;cursor:pointer;background-color:#eee;background-image:linear-gradient(#fcfcfc, #eee);border:1px solid #d5d5d5;border-radius:3px;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;-webkit-appearance:none
       }
     </style>
     <script src="vendor/query-string.js"></script>
@@ -29,18 +31,22 @@
   </head>
   <body>
     <section>
-      <h1 class="description">
-        <a id="use-oauth">Use OAuth</a>
-      </h1>
-      <p class="description">Or</p>
-      <p class="description"> <a id="gh_link" href="https://github.com/settings/tokens/new?scopes=public_repo&description=Contributors on Github" target="gh_target">Create a github auth token</a> with the <strong>"public_repo"</strong> permission.</p>
+      <p class="description">
+        <div class="btn" id="use-oauth">Use OAuth</div> or
+        <div class="btn" id="gh_link" href="https://github.com/settings/tokens/new?scopes=public_repo&description=Contributors on Github" target="gh_target">Create</div> an auth token with <strong>"public_repo"</strong> permission (and paste it below).
+      </p>
       <h1>Access Token</h1>
       <input type="text" id="token-input" placeholder="Paste your access token here">
       <p id="feedback"></p>
-      <h3 id="clear-cache"><a>Clear Contributor Data</a></h3>
+      <div class="btn" id="clear-cache">Clear Contributor Data</div>
     </section>
-    <h5>Github's Search API Rate Limit</h5>
     <section>
+      <input type="checkbox" id="show-private-repos">
+      <label for="show-private-repos">Show on private repos</label>
+    </section>
+    <hr />
+    <section>
+      <h5>Github's Search API Rate Limit</h5>
       <div>10/min for non-authenticated requests.</div>
       <div>30/min for authenticated requests</div>
     </section>

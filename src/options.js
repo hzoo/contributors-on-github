@@ -4,10 +4,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const accessTokenInput = document.getElementById("token-input");
   const oauthLink = document.getElementById("use-oauth");
   const clearCacheLink = document.getElementById("clear-cache");
+  const showPrivateReposInput = document.getElementById("show-private-repos");
 
-  getSyncStorage({ "access_token": null })
-  .then(({ access_token }) => {
+  getSyncStorage({ "access_token": null, "_showPrivateRepos": null })
+  .then(({ access_token, _showPrivateRepos }) => {
     if (access_token) accessTokenInput.value = access_token;
+    if (_showPrivateRepos) showPrivateReposInput.checked = _showPrivateRepos;
   });
 
   accessTokenInput.addEventListener("change", () => {
@@ -26,5 +28,9 @@ document.addEventListener("DOMContentLoaded", () => {
       document.querySelector("#feedback").textContent = "Storage Cleared";
     });
   });
+
+  showPrivateReposInput.addEventListener("change", () => {
+    setSyncStorage({ "_showPrivateRepos": showPrivateReposInput.checked });
+  })
 });
 
