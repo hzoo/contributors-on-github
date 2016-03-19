@@ -1,22 +1,21 @@
 # Contributors on Github
 
-> Mainly to show if it's a contributors first PR (right now it's specific to the repo, not in general).
+> Original idea was to show if it's a contributors first PR.
+> Now it shows # of Issues/PRs to the repo.
 
 > It adds some info to any urls that look like `https://github.com/babel/babel/pull/3376`
 
 ![](firstpr.gif)
 
-> Code is pretty horrible right now.
-> I'm just glad it mostly works + happy to start using it (I guess for this as well)!
 > Feel free to post suggestions and PRs (and an opportunity for me to see a [First PR] for this repo :smile:).
 
 #### Usage
 
-You can start from any page on `github.com` and when you navigate to a specific pull request (like https://github.com/babel/babel/pull/3331), it will inject the info about the # of PRs a user has made to that specific repo.
+You can start from any page on `github.com` and when you navigate to a specific issue/pull request (such as https://github.com/babel/babel/pull/3331), it will inject information inline (like the # of PRs a user has made to that specific repo).
 
-![](injected-content.png)
+![https://github.com/jscs-dev/node-jscs/pull/2180](injected-content.png)
 
-You can click on `[Update PRs]` to update the number if it has changed (the number is cached in chrome storage).
+You can click on `🔄` to update the data if it has changed (it is cached in chrome storage).
 
 ---
 
