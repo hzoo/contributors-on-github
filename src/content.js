@@ -34,10 +34,11 @@ function getContributorInfo() {
   return ret;
 }
 
-function buildUrl({base, q: {type, filterUser, author, repo}, sort, order, per_page, access_token}) {
+function buildUrl({base, q: {type, filterUser, author, repo, user}, sort, order, per_page, access_token}) {
   let query = `${base}?q=`;
   query += `${author ? `+author:${author}`: ""}`;
   query += `${repo ? `+repo:${repo}`: ""}`;
+  query += `${user ? `+user:${user}`: ""}`;
   query += `${type ? `+type:${type}`: ""}`;
   query += `${filterUser ? `+-user:${filterUser}`: ""}`;
   query += `${access_token ? `&access_token=${access_token}`: ""}`;
@@ -47,7 +48,7 @@ function buildUrl({base, q: {type, filterUser, author, repo}, sort, order, per_p
   return query;
 }
 
-function contributorCount({access_token, contributor, repoPath, old = {}, type}) {
+function contributorCount({access_token, contributor, user, repoPath, old = {}, type}) {
   let searchURL = buildUrl({
     access_token,
     base: "https://api.github.com/search/issues",
@@ -56,7 +57,8 @@ function contributorCount({access_token, contributor, repoPath, old = {}, type})
     q: {
       type,
       author: contributor,
-      repo: repoPath
+      repo: user ? undefined : repoPath,
+      user: user
     },
     sort: "created"
   });
