@@ -96,22 +96,22 @@ function appendPRText(currentNum, repoInfo) {
   let {issues, prs, firstPrNumber, firstIssueNumber} = repoInfo;
 
   if (prs !== undefined) {
-    let prText = `${prs} PRs`;
+    let prText = `${prs}`;
     if (firstPrNumber === +currentNum) {
       prText = "First PR";
       if (prs > 1) {
-        prText += ` out of ${prs} (to the repo)`;
+        prText += ` out of ${prs} (in this repo)`;
       }
     }
     repoInfo.prText = prText;
   }
 
   if (issues !== undefined) {
-    let issueText = `${issues} Issues`;
+    let issueText = `${issues}`;
     if (firstIssueNumber === +currentNum) {
       issueText = "First Issue";
       if (issues > 1) {
-        issueText += ` out of ${issues} (to the repo)`;
+        issueText += ` out of ${issues} (in this repo)`;
       }
     }
     repoInfo.issueText = issueText;
@@ -120,8 +120,28 @@ function appendPRText(currentNum, repoInfo) {
   return repoInfo;
 }
 
-function makeLabel(text) {
-  return `<span class="timeline-comment-label">${text}</span>`;
+function getIconPath(icon) {
+  if (icon === "git-issue-opened") {
+    return `<path d="M7 2.3c3.14 0 5.7 2.56 5.7 5.7S10.14 13.7 7 13.7 1.3 11.14 1.3 8s2.56-5.7 5.7-5.7m0-1.3C3.14 1 0 4.14 0 8s3.14 7 7 7 7-3.14 7-7S10.86 1 7 1z m1 3H6v5h2V4z m0 6H6v2h2V10z" />`;
+  } else if (icon === "git-pull-request") {
+    return `<path d="M11 11.28c0-1.73 0-6.28 0-6.28-0.03-0.78-0.34-1.47-0.94-2.06s-1.28-0.91-2.06-0.94c0 0-1.02 0-1 0V0L4 3l3 3V4h1c0.27 0.02 0.48 0.11 0.69 0.31s0.3 0.42 0.31 0.69v6.28c-0.59 0.34-1 0.98-1 1.72 0 1.11 0.89 2 2 2s2-0.89 2-2c0-0.73-0.41-1.38-1-1.72z m-1 2.92c-0.66 0-1.2-0.55-1.2-1.2s0.55-1.2 1.2-1.2 1.2 0.55 1.2 1.2-0.55 1.2-1.2 1.2zM4 3c0-1.11-0.89-2-2-2S0 1.89 0 3c0 0.73 0.41 1.38 1 1.72 0 1.55 0 5.56 0 6.56-0.59 0.34-1 0.98-1 1.72 0 1.11 0.89 2 2 2s2-0.89 2-2c0-0.73-0.41-1.38-1-1.72V4.72c0.59-0.34 1-0.98 1-1.72z m-0.8 10c0 0.66-0.55 1.2-1.2 1.2s-1.2-0.55-1.2-1.2 0.55-1.2 1.2-1.2 1.2 0.55 1.2 1.2z m-1.2-8.8c-0.66 0-1.2-0.55-1.2-1.2s0.55-1.2 1.2-1.2 1.2 0.55 1.2 1.2-0.55 1.2-1.2 1.2z" />`;
+  } else if (icon === "sync") {
+    return `<path d="M10.24 7.4c0.19 1.28-0.2 2.62-1.2 3.6-1.47 1.45-3.74 1.63-5.41 0.54l1.17-1.14L0.5 9.8 1.1 14l1.31-1.26c2.36 1.74 5.7 1.57 7.84-0.54 1.24-1.23 1.81-2.85 1.74-4.46L10.24 7.4zM2.96 5c1.47-1.45 3.74-1.63 5.41-0.54l-1.17 1.14 4.3 0.6L10.9 2l-1.31 1.26C7.23 1.52 3.89 1.69 1.74 3.8 0.5 5.03-0.06 6.65 0.01 8.26l1.75 0.35C1.57 7.33 1.96 5.98 2.96 5z" />`;
+  }
+}
+
+function makeIcon(icon) {
+  return `<svg aria-hidden="true" class="octicon octicon-${icon}" height="14" role="img" version="1.1" viewBox="0 0 14 16" width="14">
+    ${getIconPath(icon)}
+  </svg>`;
+}
+
+function makeLabel(text, octicon) {
+  return `<span class="timeline-comment-label">
+${octicon ? makeIcon(octicon) : ""}
+<span class="timeline-comment-label-text">${text}</span>
+</span>
+`;
 }
 
 function makeUpdateLabel(time) {
@@ -131,13 +151,13 @@ function makeUpdateLabel(time) {
 function injectInitialUI({ contributor, repoPath }) {
   let $elem = $(".timeline-comment-header-text").first();
   let prId = "gce-num-prs";
-  let prText = makeLabel("Loading..");
+  let prText = makeLabel("Loading..", "git-pull-request");
 
   if ($(`#${prId}`).length) return;
 
   let issueId = "gce-num-issues";
-  let issueText = makeLabel("Loading..");
-  let updateText = makeLabel("🔄");
+  let issueText = makeLabel("Loading..", "git-issue-opened");
+  let updateText = makeLabel("", "sync");
 
   $elem.before(`<a href="/${repoPath}/pulls?utf8=%E2%9C%93&q=is:both+is:pr+author:${contributor}" id="${prId}">${prText}</a>`);
   $elem.before(`<a href="/${repoPath}/issues?utf8=%E2%9C%93&q=is:both+is:issue+author:${contributor}" id="${issueId}">${issueText}</a>`);
@@ -152,12 +172,12 @@ function injectInitialUI({ contributor, repoPath }) {
 }
 
 function updateTextNodes({ prText, issueText, lastUpdate }) {
-  let prNode = $("#gce-num-prs .timeline-comment-label");
+  let prNode = $("#gce-num-prs .timeline-comment-label-text");
   if (prNode.length) {
     prNode.text(prText);
   }
 
-  let issueNode = $("#gce-num-issues .timeline-comment-label");
+  let issueNode = $("#gce-num-issues .timeline-comment-label-text");
   if (issueNode.length) {
     issueNode.text(issueText);
   }
