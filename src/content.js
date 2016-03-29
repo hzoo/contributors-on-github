@@ -137,10 +137,8 @@ function makeIcon(icon) {
 }
 
 function makeLabel(text, octicon) {
-  return `<span class="timeline-comment-label">
-${octicon ? makeIcon(octicon) : ""}
+  return `${octicon ? makeIcon(octicon) : ""}
 <span class="timeline-comment-label-text">${text}</span>
-</span>
 `;
 }
 
@@ -159,9 +157,12 @@ function injectInitialUI({ contributor, repoPath }) {
   let issueText = makeLabel("Loading..", "git-issue-opened");
   let updateText = makeLabel("", "sync");
 
-  $elem.before(`<a href="/${repoPath}/pulls?utf8=%E2%9C%93&q=is:both+is:pr+author:${contributor}" id="${prId}">${prText}</a>`);
-  $elem.before(`<a href="/${repoPath}/issues?utf8=%E2%9C%93&q=is:both+is:issue+author:${contributor}" id="${issueId}">${issueText}</a>`);
-  $elem.before(`<a style="cursor:pointer;" id="gce-update">${updateText}</a>`);
+  $elem.before(`<span class="timeline-comment-label">
+<a href="/${repoPath}/pulls?utf8=%E2%9C%93&q=is:both+is:pr+author:${contributor}" id="${prId}">${prText}</a>
+<a href="/${repoPath}/issues?utf8=%E2%9C%93&q=is:both+is:issue+author:${contributor}" id="${issueId}">${issueText}</a>
+</span>
+  `);
+  $elem.before(`<a class="timeline-comment-label" style="cursor:pointer;" id="gce-update">${updateText}</a>`);
   $elem.before(`<a id="gce-update-time" class="timeline-comment-label">N/A</a>`);
 
   let $update = $("#gce-update");
