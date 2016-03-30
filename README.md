@@ -1,13 +1,10 @@
 # Contributors on Github
 
-> Original idea was to show if it's a contributors first PR.
-> Now it shows # of Issues/PRs to the repo.
+> The original idea was to show if it's a contributors first PR on the pull request page such as `https://github.com/babel/babel/pull/3376`.
 
-> It adds some info to any urls that look like `https://github.com/babel/babel/pull/3376`
+![https://github.com/babel/babel/pull/3283](firstpr.gif)
 
-![](firstpr.gif)
-
-> Feel free to post suggestions and PRs (and an opportunity for me to see a [First PR] for this repo :smile:).
+> Feel free to post suggestions and PRs (it's an opportunity for me to use the extension myself and see a [First PR] for this repo too :smile:).
 
 #### Usage
 
@@ -33,6 +30,8 @@ If necessary, you may want to create or get a "access token" that uses the `publ
  
 #### Install
 
+> I would recommend install locally to try new features first (it's easy to update/revert/modify yourself).
+
 - [Chrome extension](https://chrome.google.com/webstore/detail/github-contributor-stats/cjbacdldhllelehomkmlniifaojgaeph?hl=en)
 
 #### Local Install
@@ -46,7 +45,9 @@ If necessary, you may want to create or get a "access token" that uses the `publ
 
 Now try it out!
 
-Used https://github.com/GoogleChrome/chrome-app-samples/tree/master/samples/github-auth, https://github.com/sindresorhus/notifier-for-github-chrome for reference.
+References
+- https://github.com/GoogleChrome/chrome-app-samples/tree/master/samples/github-auth
+- https://github.com/sindresorhus/notifier-for-github-chrome
 
 #### LICENSE
 MIT

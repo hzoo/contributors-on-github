@@ -100,7 +100,7 @@ function appendPRText(currentNum, repoInfo) {
     if (firstPrNumber === +currentNum) {
       prText = "First PR";
       if (prs > 1) {
-        prText += ` out of ${prs} (in this repo)`;
+        prText += ` out of ${prs}`;
       }
     }
     repoInfo.prText = prText;
@@ -111,7 +111,7 @@ function appendPRText(currentNum, repoInfo) {
     if (firstIssueNumber === +currentNum) {
       issueText = "First Issue";
       if (issues > 1) {
-        issueText += ` out of ${issues} (in this repo)`;
+        issueText += ` out of ${issues}`;
       }
     }
     repoInfo.issueText = issueText;
