@@ -31,24 +31,27 @@
   </head>
   <body>
     <section>
+      <h5>Github's Search API Rate Limit</h5>
+      <div>10/min for non-authenticated requests (no auth token).</div>
+      <div>30/min for authenticated requests (with token)</div>
+    </section>
+    <section>
       <p class="description">
         <div class="btn" id="use-oauth">Use OAuth</div> or
-        <div class="btn" id="gh_link" href="https://github.com/settings/tokens/new?scopes=public_repo&description=Contributors on Github" target="gh_target">Create</div> an auth token with <strong>"public_repo"</strong> permission (and paste it below).
+        <a class="btn" id="gh_link" href="https://github.com/settings/tokens/new?scopes=public_repo&description=Contributors on Github" target="gh_target">Create an auth token </a> with the <strong>"public_repo"</strong> permission (and paste it below).
       </p>
       <h1>Access Token</h1>
       <input type="text" id="token-input" placeholder="Paste your access token here">
       <p id="feedback"></p>
-      <div class="btn" id="clear-cache">Clear Contributor Data</div>
     </section>
     <section>
       <input type="checkbox" id="show-private-repos">
-      <label for="show-private-repos">Show on private repos</label>
+      <label for="show-private-repos">Show stats on private repos</label>
+      <p>Do this if your access token has "repo" permissions.</p>
     </section>
     <hr />
     <section>
-      <h5>Github's Search API Rate Limit</h5>
-      <div>10/min for non-authenticated requests.</div>
-      <div>30/min for authenticated requests</div>
+      <div class="btn" id="clear-cache">Clear All Contributor Data</div>
     </section>
   </body>
 </html>
