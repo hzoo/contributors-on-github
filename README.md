@@ -1,8 +1,8 @@
 # Contributors on Github
 
-> The original idea was to show if it's a contributors first PR on the pull request page such as `https://github.com/babel/babel/pull/3376`.
+> The original idea was to show if it's a contributors first PR on the pull request page such as https://github.com/babel/babel/pull/3283.
 
-![https://github.com/babel/babel/pull/3283](firstpr.gif)
+[![](firstpr.gif)](https://github.com/babel/babel/pull/3283)
 
 > Feel free to post suggestions and PRs (it's an opportunity for me to use the extension myself and see a [First PR] for this repo too :smile:).
 
@@ -10,7 +10,7 @@
 
 You can start from any page on `github.com` and when you navigate to a specific issue/pull request (such as https://github.com/babel/babel/pull/3331), it will inject information inline (like the # of PRs a user has made to that specific repo).
 
-![https://github.com/jscs-dev/node-jscs/pull/2180](injected-content.png)
+[![](injected-content.png)](https://github.com/jscs-dev/node-jscs/pull/2180)
 
 You can click on `🔄` to update the data if it has changed (it is cached in chrome storage).
 
