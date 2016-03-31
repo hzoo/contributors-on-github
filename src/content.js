@@ -234,15 +234,15 @@ function update({ contributor, repoPath, currentNum }) {
 
 document.addEventListener("DOMContentLoaded", () => {
   gitHubInjection(window, () => {
-    getSyncStorage({ "_showPrivateRepos": null })
-    .then(({ _showPrivateRepos }) => {
-      if (!_showPrivateRepos && isPrivate()) return;
+    if (isPR(location.pathname) || isIssue(location.pathname)) {
+      getSyncStorage({ "_showPrivateRepos": null })
+      .then(({ _showPrivateRepos }) => {
+        if (!_showPrivateRepos && isPrivate()) return;
 
-      if (isPR(location.pathname) || isIssue(location.pathname)) {
-        if (getContributor()) {
-          update(getContributorInfo());
-        }
-      }
-    });
+          if (getContributor()) {
+            update(getContributorInfo());
+          }
+      });
+    }
   });
 });
