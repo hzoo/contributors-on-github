@@ -8,9 +8,7 @@
 
 [![](firstpr.gif)](https://github.com/babel/babel/pull/3283)
 
-> Feel free to post suggestions and PRs (it's an opportunity for me to use the extension myself and see a [First PR] for this repo too :smile:).
-
-> I would recommend just cloning the repo installing locally.
+> Much thanks to @Pocket-titan and @djrosenbaum for working on the logo 🖼!
 
 #### Usage
 
