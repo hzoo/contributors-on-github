@@ -1,6 +1,8 @@
-# Contributors on Github
+<p align="center">
+  <img alt="" src="graphics/readme_git_nodes.png">
+</p>
 
-![](graphics/readme_git_nodes.png)
+<h1 align="center">Contributors on Github</h1>
 
 > The original idea was to show if it's a contributors first PR on the pull request page such as https://github.com/babel/babel/pull/3283.
 
