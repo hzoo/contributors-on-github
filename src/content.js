@@ -6,6 +6,7 @@ const isPR = (path) => /^\/[^/]+\/[^/]+\/pull\/\d+/.test(path);
 const isIssue = (path) => /^\/[^/]+\/[^/]+\/issues\/\d+/.test(path);
 const getCurrentUser = () => $(".js-menu-target img").attr("alt").slice(1) || "";
 const isPrivate = () => $(".repo-private-label").length > 0;
+let showOrgOnly = false;
 
 function getContributor() {
   let $contributor = $(".timeline-comment-wrapper .timeline-comment-header-text strong");
@@ -14,7 +15,7 @@ function getContributor() {
   }
 }
 
-function getContributorInfo({ showOrgOnly } = {}) {
+function getContributorInfo() {
   // "/babel/babel-eslint/pull/1"
   let pathNameArr = location.pathname.split("/");
   let org = pathNameArr[1]; // babel
@@ -29,6 +30,7 @@ function getContributorInfo({ showOrgOnly } = {}) {
     repoPath
   };
 
+  // global variable
   if (showOrgOnly) {
     ret.user = org;
   }
@@ -208,7 +210,9 @@ ${dropdown}
     $acrossThisOrg.html(`${$checkbox} across this org`);
     $inThisRepo.html('in this repo');
     $dropdownText.html('across this org');
-    update(getContributorInfo({ showOrgOnly: true }));
+    // global
+    showOrgOnly = true;
+    update(getContributorInfo());
   });
 
   $inThisRepo.dom[0].addEventListener("click", function() {
@@ -217,6 +221,8 @@ ${dropdown}
     $inThisRepo.html(`${$checkbox} in this repo`);
     $acrossThisOrg.html('across this org');
     $dropdownText.html('in this repo');
+    // global
+    showOrgOnly = false;
     update(getContributorInfo());
   });
 }
