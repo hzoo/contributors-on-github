@@ -13,8 +13,6 @@
     "storage",
     "identity"
   ],
-  "icons": {
-  },
   "background": {
     "persistent": false,
     "scripts": [
