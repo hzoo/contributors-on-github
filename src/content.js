@@ -14,7 +14,7 @@ function getContributor() {
   }
 }
 
-function getContributorInfo() {
+function getContributorInfo({ showOrgOnly } = {}) {
   // "/babel/babel-eslint/pull/1"
   let pathNameArr = location.pathname.split("/");
   let org = pathNameArr[1]; // babel
@@ -28,6 +28,10 @@ function getContributorInfo() {
     currentNum,
     repoPath
   };
+
+  if (showOrgOnly) {
+    ret.user = org;
+  }
 
   injectInitialUI(ret);
 
@@ -156,10 +160,33 @@ function injectInitialUI({ contributor, repoPath }) {
   let issueId = "gce-num-issues";
   let issueText = makeLabel("Loading..", "git-issue-opened");
   let updateText = makeLabel("", "sync");
+  let $checkbox = `<svg aria-hidden="true" class="octicon octicon-check" height="16" version="1.1" viewBox="0 0 12 16" width="12"><path d="M12 5L4 13 0 9l1.5-1.5 2.5 2.5 6.5-6.5 1.5 1.5z"></path></svg>`;
+
+  let dropdown = `<div class="dropdown js-menu-container" style="display: inline-block">
+    <button class="btn-link muted-link js-menu-target">
+      <span id="gce-dropdown-text">in this repo</span>
+      <span class="dropdown-caret"></span>
+    </button>
+    <div class="dropdown-menu-content diff-options-content js-menu-content">
+      <ul class="dropdown-menu dropdown-menu-sw">
+        <div class="dropdown-header">
+          View options
+        </div>
+        <a class="dropdown-item" id="gce-across-this-org">
+          across this org
+        </a>
+        <a class="dropdown-item selected" id="gce-in-this-repo">
+            ${$checkbox}
+          in this repo
+        </a>
+      </ul>
+    </div>
+  </div>`;
 
   $elem.before(`<span class="timeline-comment-label">
 <a href="/${repoPath}/pulls?utf8=%E2%9C%93&q=is:both+is:pr+author:${contributor}" id="${prId}">${prText}</a>
 <a href="/${repoPath}/issues?utf8=%E2%9C%93&q=is:both+is:issue+author:${contributor}" id="${issueId}">${issueText}</a>
+${dropdown}
 </span>
   `);
   $elem.before(`<a class="timeline-comment-label" style="cursor:pointer;" id="gce-update">${updateText}</a>`);
@@ -168,6 +195,28 @@ function injectInitialUI({ contributor, repoPath }) {
   let $update = $("#gce-update");
   $update.dom[0].addEventListener("click", function() {
     setStorage(contributor, repoPath, {});
+    update(getContributorInfo());
+  });
+
+  let $acrossThisOrg = $("#gce-across-this-org");
+  let $inThisRepo = $("#gce-in-this-repo");
+  let $dropdownText = $("#gce-dropdown-text");
+
+  $acrossThisOrg.dom[0].addEventListener("click", function() {
+    $acrossThisOrg.addClass("selected");
+    $inThisRepo.removeClass("selected");
+    $acrossThisOrg.html(`${$checkbox} across this org`);
+    $inThisRepo.html('in this repo');
+    $dropdownText.html('across this org');
+    update(getContributorInfo({ showOrgOnly: true }));
+  });
+
+  $inThisRepo.dom[0].addEventListener("click", function() {
+    $inThisRepo.addClass("selected");
+    $acrossThisOrg.removeClass("selected");
+    $inThisRepo.html(`${$checkbox} in this repo`);
+    $acrossThisOrg.html('across this org');
+    $dropdownText.html('in this repo');
     update(getContributorInfo());
   });
 }
@@ -189,18 +238,19 @@ function updateTextNodes({ prText, issueText, lastUpdate }) {
   }
 }
 
-function update({ contributor, repoPath, currentNum }) {
+function update({ contributor, repoPath, currentNum, user }) {
   getStorage(contributor, repoPath)
   .then((storage) => {
-    let storageRes = storage[contributor][repoPath];
+    let storageRes = storage[contributor][user ? user : repoPath] = {};
+
     if (storageRes.prs || storageRes.issues) {
       updateTextNodes(appendPRText(currentNum, storageRes));
     } else {
       getSyncStorage({ "access_token": null })
       .then((res) => {
         Promise.all([
-          contributorCount({ old: storageRes, access_token: res.access_token, type: "pr", contributor, repoPath}),
-          contributorCount({ old: storageRes, access_token: res.access_token, type: "issue", contributor, repoPath})
+          contributorCount({ old: storageRes, user, access_token: res.access_token, type: "pr", contributor, repoPath}),
+          contributorCount({ old: storageRes, user, access_token: res.access_token, type: "issue", contributor, repoPath})
         ])
         .then(([prInfo, issueInfo]) => {
           let repoInfo = Object.assign(prInfo, issueInfo);
