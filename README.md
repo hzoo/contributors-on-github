@@ -1,5 +1,7 @@
 # Contributors on Github
 
+![](graphics/readme_git_nodes.png)
+
 > The original idea was to show if it's a contributors first PR on the pull request page such as https://github.com/babel/babel/pull/3283.
 
 [![](firstpr.gif)](https://github.com/babel/babel/pull/3283)
