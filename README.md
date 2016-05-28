@@ -6,6 +6,8 @@
 
 > Feel free to post suggestions and PRs (it's an opportunity for me to use the extension myself and see a [First PR] for this repo too :smile:).
 
+> I would recommend just cloning the repo installing locally.
+
 #### Usage
 
 You can start from any page on `github.com` and when you navigate to a specific issue/pull request (such as https://github.com/babel/babel/pull/3331), it will inject information inline (like the # of PRs a user has made to that specific repo).
@@ -30,7 +32,7 @@ If necessary, you may want to create or get a "access token" that uses the `publ
  
 #### Install
 
-> I would recommend install locally to try new features first (it's easy to update/revert/modify yourself).
+> I would recommend installing locally to try new features first (it's easy to update/revert/modify yourself) by just `git pull`.
 
 - [Chrome extension](https://chrome.google.com/webstore/detail/github-contributor-stats/cjbacdldhllelehomkmlniifaojgaeph?hl=en)
 
