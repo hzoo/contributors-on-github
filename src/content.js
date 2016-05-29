@@ -33,6 +33,11 @@ function getContributorInfo() {
   // global variable
   if (statsScope === "org") {
     ret.user = org;
+    ret.repoPath = org;
+  }
+
+  if (statsScope === "account") {
+    ret.repoPath = "__self";
   }
 
   injectInitialUI(ret);
@@ -51,10 +56,22 @@ function buildUrl({base, q: {type, filterUser, author, repo, user}, sort, order,
   query += `${order ? `&order=${order}`: ""}`;
   query += `${per_page ? `&per_page=${per_page}`: ""}`;
   query += `${sort ? `&sort=${sort}`: ""}`;
+
   return query;
 }
 
 function contributorCount({access_token, contributor, user, repoPath, old = {}, type}) {
+  let repo = repoPath;
+
+  // global variable
+  if (statsScope === "org") {
+    repo = undefined;
+    repoPath = repoPath.split("/")[0];
+  } else if (statsScope === "account") {
+    repo = undefined;
+    repoPath = "__self";
+  }
+
   let searchURL = buildUrl({
     access_token,
     base: "https://api.github.com/search/issues",
@@ -62,8 +79,8 @@ function contributorCount({access_token, contributor, user, repoPath, old = {}, 
     per_page: "1",
     q: {
       type,
+      repo,
       author: contributor,
-      repo: user ? undefined : repoPath,
       user: user
     },
     sort: "created"
@@ -174,12 +191,15 @@ function injectInitialUI({ contributor, repoPath }) {
         <div class="dropdown-header">
           View options
         </div>
-        <a class="dropdown-item" id="gce-across-this-org">
-          across this org
-        </a>
         <a class="dropdown-item selected" id="gce-in-this-repo">
             ${$checkbox}
           in this repo
+        </a>
+        <a class="dropdown-item" id="gce-in-this-org">
+          in this org
+        </a>
+        <a class="dropdown-item" id="gce-in-this-account">
+          in this account
         </a>
       </ul>
     </div>
@@ -200,16 +220,21 @@ ${dropdown}
     update(getContributorInfo());
   });
 
-  let $acrossThisOrg = $("#gce-across-this-org");
+  let $inThisOrg = $("#gce-in-this-org");
   let $inThisRepo = $("#gce-in-this-repo");
+  let $inThisAccount = $("#gce-in-this-account");
   let $dropdownText = $("#gce-dropdown-text");
 
-  $acrossThisOrg.dom[0].addEventListener("click", function() {
-    $acrossThisOrg.addClass("selected");
+  $inThisOrg.dom[0].addEventListener("click", function() {
+    $inThisOrg.addClass("selected");
     $inThisRepo.removeClass("selected");
-    $acrossThisOrg.html(`${$checkbox} across this org`);
-    $inThisRepo.html('in this repo');
-    $dropdownText.html('across this org');
+    $inThisAccount.removeClass("selected");
+
+    $inThisOrg.html(`${$checkbox} in this org`);
+    $dropdownText.html("in this org");
+
+    $inThisAccount.html("in this account");
+    $inThisRepo.html("in this repo");
     // global
     statsScope = "org";
     update(getContributorInfo());
@@ -217,12 +242,31 @@ ${dropdown}
 
   $inThisRepo.dom[0].addEventListener("click", function() {
     $inThisRepo.addClass("selected");
-    $acrossThisOrg.removeClass("selected");
+    $inThisOrg.removeClass("selected");
+    $inThisAccount.removeClass("selected");
+
     $inThisRepo.html(`${$checkbox} in this repo`);
-    $acrossThisOrg.html('across this org');
-    $dropdownText.html('in this repo');
+    $dropdownText.html("in this repo");
+
+    $inThisAccount.html("in this account");
+    $inThisOrg.html("in this org");
     // global
     statsScope = "repo";
+    update(getContributorInfo());
+  });
+
+  $inThisAccount.dom[0].addEventListener("click", function() {
+    $inThisAccount.addClass("selected");
+    $inThisOrg.removeClass("selected");
+    $inThisRepo.removeClass("selected");
+
+    $inThisAccount.html(`${$checkbox} in this account`);
+    $dropdownText.html("in this account");
+
+    $inThisRepo.html("in this repo");
+    $inThisOrg.html("in this org");
+    // global
+    statsScope = "account";
     update(getContributorInfo());
   });
 }
@@ -247,7 +291,14 @@ function updateTextNodes({ prText, issueText, lastUpdate }) {
 function update({ contributor, repoPath, currentNum, user }) {
   getStorage(contributor, repoPath)
   .then((storage) => {
-    let storageRes = storage[contributor][user ? user : repoPath] = {};
+    let path = repoPath;
+    if (user) {
+      path = user;
+    } else if (statsScope === "account") {
+      path = "__self";
+    }
+
+    let storageRes = storage[`${contributor}|${path}`] || {};
 
     if (storageRes.prs || storageRes.issues) {
       updateTextNodes(appendPRText(currentNum, storageRes));
