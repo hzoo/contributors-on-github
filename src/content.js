@@ -120,7 +120,7 @@ function appendPRText(currentNum, repoInfo) {
 
   if (prs !== undefined) {
     let prText = `${prs}`;
-    if (firstPrNumber === +currentNum) {
+    if (firstPrNumber === +currentNum && statsScope !== "account") {
       prText = "First PR";
       if (prs > 1) {
         prText += ` out of ${prs}`;
@@ -131,7 +131,7 @@ function appendPRText(currentNum, repoInfo) {
 
   if (issues !== undefined) {
     let issueText = `${issues}`;
-    if (firstIssueNumber === +currentNum) {
+    if (firstIssueNumber === +currentNum && statsScope !== "account") {
       issueText = "First Issue";
       if (issues > 1) {
         issueText += ` out of ${issues}`;
