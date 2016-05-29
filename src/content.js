@@ -169,6 +169,21 @@ function makeUpdateLabel(time) {
   return `<time datetime="${time}" is="relative-time"></time>`;
 }
 
+function issueOrPrLink(type, repoPath, contributor) {
+  let end = `${type === "pr" ? "pulls" : "issues"}?utf8=%E2%9C%93&q=is:both+is:${type}+author:${contributor}`;
+
+  // repo
+  if (repoPath.split("/").length === 2) {
+    return `/${repoPath}/${end}`;
+  // account
+  } else if (repoPath === "__self") {
+    return `https://github.com/${end}`;
+  // org
+  } else {
+    return `https://github.com/${end}+user:${repoPath}`;
+  }
+}
+
 function injectInitialUI({ contributor, repoPath }) {
   let $elem = $(".timeline-comment-header-text").first();
   let prId = "gce-num-prs";
@@ -206,8 +221,8 @@ function injectInitialUI({ contributor, repoPath }) {
   </div>`;
 
   $elem.before(`<span class="timeline-comment-label">
-<a href="/${repoPath}/pulls?utf8=%E2%9C%93&q=is:both+is:pr+author:${contributor}" id="${prId}">${prText}</a>
-<a href="/${repoPath}/issues?utf8=%E2%9C%93&q=is:both+is:issue+author:${contributor}" id="${issueId}">${issueText}</a>
+<a href="${issueOrPrLink("pr", repoPath, contributor)}" id="${prId}">${prText}</a>
+<a href="${issueOrPrLink("issue", repoPath, contributor)}" id="${issueId}">${issueText}</a>
 ${dropdown}
 </span>
   `);
@@ -235,6 +250,10 @@ ${dropdown}
 
     $inThisAccount.html("in this account");
     $inThisRepo.html("in this repo");
+
+    $(`#${prId}`).attr("href", issueOrPrLink("pr", repoPath.split("/")[0], contributor));
+    $(`#${issueId}`).attr("href", issueOrPrLink("issue", repoPath.split("/")[0], contributor));
+
     // global
     statsScope = "org";
     update(getContributorInfo());
@@ -250,6 +269,10 @@ ${dropdown}
 
     $inThisAccount.html("in this account");
     $inThisOrg.html("in this org");
+
+    $(`#${prId}`).attr("href", issueOrPrLink("pr", repoPath, contributor));
+    $(`#${issueId}`).attr("href", issueOrPrLink("issue", repoPath, contributor));
+
     // global
     statsScope = "repo";
     update(getContributorInfo());
@@ -265,6 +288,10 @@ ${dropdown}
 
     $inThisRepo.html("in this repo");
     $inThisOrg.html("in this org");
+
+    $(`#${prId}`).attr("href", issueOrPrLink("pr", "__self", contributor));
+    $(`#${issueId}`).attr("href", issueOrPrLink("issue", "__self", contributor));
+
     // global
     statsScope = "account";
     update(getContributorInfo());
