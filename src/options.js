@@ -22,8 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   clearCacheLink.addEventListener("click", () => {
     let temp = accessTokenInput.value;
-    clearSyncStorage()
-    .then(() => {
+    chrome.storage.sync.clear(() => {
       setSyncStorage({ "access_token": temp });
       document.querySelector("#feedback").textContent = "Storage Cleared";
     });
