@@ -6,7 +6,7 @@ const isPR = (path) => /^\/[^/]+\/[^/]+\/pull\/\d+/.test(path);
 const isIssue = (path) => /^\/[^/]+\/[^/]+\/issues\/\d+/.test(path);
 const getCurrentUser = () => $(".js-menu-target img").attr("alt").slice(1) || "";
 const isPrivate = () => $(".repo-private-label").length > 0;
-let showOrgOnly = false;
+let statsScope = "repo";
 
 function getContributor() {
   let $contributor = $(".timeline-comment-wrapper .timeline-comment-header-text strong");
@@ -31,7 +31,7 @@ function getContributorInfo() {
   };
 
   // global variable
-  if (showOrgOnly) {
+  if (statsScope === "org") {
     ret.user = org;
   }
 
@@ -211,7 +211,7 @@ ${dropdown}
     $inThisRepo.html('in this repo');
     $dropdownText.html('across this org');
     // global
-    showOrgOnly = true;
+    statsScope = "org";
     update(getContributorInfo());
   });
 
@@ -222,7 +222,7 @@ ${dropdown}
     $acrossThisOrg.html('across this org');
     $dropdownText.html('in this repo');
     // global
-    showOrgOnly = false;
+    statsScope = "repo";
     update(getContributorInfo());
   });
 }
