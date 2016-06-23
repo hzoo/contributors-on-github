@@ -9,7 +9,7 @@ const isPrivate = () => $(".repo-private-label").length > 0;
 let statsScope = "repo";
 
 function getContributor() {
-  let $contributor = $(".timeline-comment-wrapper .timeline-comment-header-text strong");
+  let $contributor = $(".timeline-comment-wrapper .timeline-comment-header-text strong a");
   if ($contributor.length) {
     return $contributor.first().text().trim();
   }
