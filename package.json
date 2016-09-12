@@ -1,0 +1,26 @@
+{
+  "name": "github-contributor-extension",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Show github contributor's stats (# of Issues/PRs)",
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {
+    "chrome-webstore-upload-cli": "^1.0.3"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "release": "webstore upload --source=src --auto-publish"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hzoo/contributors-on-github.git"
+  },
+  "keywords": [],
+  "author": "Henry Zhu",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/hzoo/contributors-on-github/issues"
+  },
+  "homepage": "https://github.com/hzoo/contributors-on-github#readme"
+}
