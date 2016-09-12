@@ -9,7 +9,6 @@
     "chrome-webstore-upload-cli": "^1.0.3"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "release": "webstore upload --source=src --auto-publish"
   },
   "repository": {
