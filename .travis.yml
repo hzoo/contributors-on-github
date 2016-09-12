@@ -1,4 +1,10 @@
+git:
+  depth: 3
+sudo: false
 language: node_js
+cache:
+  directories:
+  - node_modules
 node_js:
   - '6'
 env:
