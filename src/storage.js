@@ -29,6 +29,18 @@ window.setSyncStorage = promisify(chrome.storage.sync.set.bind(chrome.storage.sy
 window.setStorage = (CONTRIBUTOR, ORG_REPO_PATH, value) => {
   return window.setSyncStorage({
     [`${CONTRIBUTOR}|${ORG_REPO_PATH}`]: value
+  })
+  .catch((e) => {
+    if (e.message === "MAX_ITEMS quota exceeded") {
+      getSyncStorage({ "access_token": null })
+      .then(({ access_token }) => {
+        if (access_token) {
+          chrome.storage.sync.clear(() => {
+            setSyncStorage({ "access_token": access_token });
+          });
+        }
+      });
+    }
   });
 };
 
