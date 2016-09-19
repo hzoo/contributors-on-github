@@ -5,7 +5,7 @@
 const isPR = (path) => /^\/[^/]+\/[^/]+\/pull\/\d+/.test(path);
 const isIssue = (path) => /^\/[^/]+\/[^/]+\/issues\/\d+/.test(path);
 const getCurrentUser = () => $(".js-menu-target img").attr("alt").slice(1) || "";
-const isPrivate = () => $(".repo-private-label").length > 0;
+const isPrivate = () => $(".label-private").length > 0;
 let statsScope = "repo";
 
 function getContributor() {
