@@ -8,8 +8,9 @@ const getCurrentUser = () => $(".js-menu-target img").attr("alt").slice(1) || ""
 const isPrivate = () => $(".label-private").length > 0;
 let statsScope = "repo";
 
-const githubURLBase = window.location.hostname === 'github.com' ? 'api.github.com' : `${window.location.hostname}/api/v3`;
-const githubURL = `https://${githubURLBase}`
+const isEnterprise = window.location.hostname !== 'github.com';
+const githubURLBase = isEnterprise ? `${window.location.hostname}/api/v3` : 'api.github.com';
+const githubURL = `https://${githubURLBase}`;
 
 function getContributor() {
   let $contributor = $(".timeline-comment-wrapper .timeline-comment-header-text strong a");
@@ -333,11 +334,15 @@ function update({ contributor, repoPath, currentNum, user }) {
     if (storageRes.prs || storageRes.issues) {
       updateTextNodes(appendPRText(currentNum, storageRes));
     } else {
-      getSyncStorage({ "access_token": null })
+      const token = isEnterprise ? "enterprise_access_token" : "access_token";
+
+      getSyncStorage({ [token]: null })
       .then((res) => {
+        const access_token = isEnterprise ? res.enterprise_access_token : res.access_token;
+
         Promise.all([
-          contributorCount({ old: storageRes, user, access_token: res.access_token, type: "pr", contributor, repoPath}),
-          contributorCount({ old: storageRes, user, access_token: res.access_token, type: "issue", contributor, repoPath})
+          contributorCount({ old: storageRes, user, access_token, type: "pr", contributor, repoPath}),
+          contributorCount({ old: storageRes, user, access_token, type: "issue", contributor, repoPath})
         ])
         .then(([prInfo, issueInfo]) => {
           let repoInfo = Object.assign(prInfo, issueInfo);
