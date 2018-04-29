@@ -4,7 +4,10 @@
   "version": "1.0.0",
   "description": "Show github contributor's stats (# of Issues/PRs)",
   "main": "index.js",
-  "dependencies": {},
+  "dependencies": {
+    "webext-domain-permission-toggle": "0.0.2",
+    "webext-dynamic-content-scripts": "^5.0.1"
+  },
   "devDependencies": {
     "chrome-webstore-upload-cli": "^1.0.3"
   },
