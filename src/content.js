@@ -8,6 +8,9 @@ const getCurrentUser = () => $(".js-menu-target img").attr("alt").slice(1) || ""
 const isPrivate = () => $(".label-private").length > 0;
 let statsScope = "repo";
 
+const githubURLBase = window.location.hostname === 'github.com' ? 'api.github.com' : `${window.location.hostname}/api/v3`;
+const githubURL = `https://${githubURLBase}`
+
 function getContributor() {
   let $contributor = $(".timeline-comment-wrapper .timeline-comment-header-text strong a");
   if ($contributor.length) {
@@ -71,10 +74,10 @@ function contributorCount({access_token, contributor, user, repoPath, old = {}, 
     repo = undefined;
     repoPath = "__self";
   }
-
+  
   let searchURL = buildUrl({
     access_token,
-    base: "https://api.github.com/search/issues",
+    base: `${githubURL}/search/issues`,
     order: "asc",
     per_page: "1",
     q: {
