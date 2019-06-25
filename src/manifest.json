@@ -11,11 +11,19 @@
   "permissions": [
     "https://github.com/*/*",
     "storage",
-    "identity"
+    "identity",
+    "contextMenus",
+    "activeTab"
+  ],
+  "optional_permissions": [
+    "http://*/*",
+    "https://*/*"
   ],
   "background": {
     "persistent": false,
     "scripts": [
+      "vendor/webext-domain-permission-toggle.js",
+      "vendor/webext-dynamic-content-scripts.js",
       "background.js"
     ]
   },
