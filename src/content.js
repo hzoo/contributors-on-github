@@ -196,29 +196,27 @@ function injectInitialUI({ contributor, repoPath }) {
   let updateText = makeLabel("", "sync");
   let $checkbox = `<svg aria-hidden="true" class="octicon octicon-check" height="16" version="1.1" viewBox="0 0 12 16" width="12"><path d="M12 5L4 13 0 9l1.5-1.5 2.5 2.5 6.5-6.5 1.5 1.5z"></path></svg>`;
 
-  let dropdown = `<div class="dropdown js-menu-container" style="display: inline-block">
-    <button class="btn-link muted-link js-menu-target">
+  let dropdown = `<details class="details-overlay details-reset" aria-haspopup="menu" id="gce-dropdown-container">
+    <summary class="btn-link muted-link js-menu-target">
       <span id="gce-dropdown-text">in this repo</span>
       <span class="dropdown-caret"></span>
-    </button>
-    <div class="dropdown-menu-content diff-options-content js-menu-content">
-      <ul class="dropdown-menu dropdown-menu-sw">
-        <div class="dropdown-header">
-          View options
-        </div>
-        <a class="dropdown-item selected" id="gce-in-this-repo">
-            ${$checkbox}
-          in this repo
-        </a>
-        <a class="dropdown-item" id="gce-in-this-org">
-          in this org
-        </a>
-        <a class="dropdown-item" id="gce-in-this-account">
-          in this account
-        </a>
-      </ul>
-    </div>
-  </div>`;
+    </summary>
+    <details-menu class="dropdown-menu dropdown-menu-sw" role="menu">
+      <div class="dropdown-header">
+        View options
+      </div>
+      <a role="menuitem" class="dropdown-item selected" id="gce-in-this-repo">
+          ${$checkbox}
+        in this repo
+      </a>
+      <a role="menuitem" class="dropdown-item" id="gce-in-this-org">
+        in this org
+      </a>
+      <a role="menuitem" class="dropdown-item" id="gce-in-this-account">
+        in this account
+      </a>
+    </details-menu>
+  </details>`;
 
   $elem.before(`<span class="timeline-comment-label">
 <a href="${issueOrPrLink("pr", repoPath, contributor)}" id="${prId}">${prText}</a>

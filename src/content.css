@@ -7,3 +7,21 @@
 #gce-num-issues:hover ~ #gce-update-time {
   display: block;
 }
+
+#gce-dropdown-container {
+  display: inline-block;
+  position: relative;
+}
+
+#gce-dropdown-container .dropdown-item:not(.selected) {
+  padding-left: 36px;
+}
+
+#gce-dropdown-container .dropdown-item {
+  cursor: pointer;
+  font-size: 14px;
+}
+
+#gce-dropdown-container .dropdown-item .octicon-check {
+  margin-right: 4px;
+}
