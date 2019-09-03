@@ -166,7 +166,7 @@ function makeLabel(text, octicon) {
 }
 
 function makeUpdateLabel(time) {
-  return `<time datetime="${time}" is="relative-time"></time>`;
+  return `<relative-time datetime="${time}"></relative-time>`;
 }
 
 function issueOrPrLink(type, repoPath, contributor) {
