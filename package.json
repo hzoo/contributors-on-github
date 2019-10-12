@@ -1,7 +1,7 @@
 {
   "name": "github-contributor-extension",
   "private": true,
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Show github contributor's stats (# of Issues/PRs)",
   "main": "index.js",
   "dependencies": {},
