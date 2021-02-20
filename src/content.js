@@ -8,10 +8,14 @@ const getCurrentUser = () => $(".js-menu-target img").attr("alt").slice(1) || ""
 const isPrivate = () => $(".label-private").length > 0;
 let statsScope = "repo";
 
-function getContributor() {
-  let $contributor = $(".timeline-comment-wrapper .timeline-comment-header-text strong a");
-  if ($contributor.length) {
-    return $contributor.first().text().trim();
+// Get the username of the first contributor *in the DOM* of the page
+function getFirstContributor() {
+  // refined-github has a comprehensive selector. https://github.com/sindresorhus/refined-github/blob/3aadf2f9141107d7ca92e8753f2a66cbc10ebd9d/source/features/show-names.tsx#L13-L16
+  // But we only need usernames within PR & Issue threads..
+  const usernameElements = $('.timeline-comment a.author');
+
+  if (usernameElements.length) {
+    return usernameElements.first().text().trim();
   }
 }
 
@@ -22,7 +26,7 @@ function getContributorInfo() {
   let repo = pathNameArr[2]; // babel-eslint
   let currentNum = pathNameArr[4]; // 3390
   let repoPath = org + "/" + repo; // babel/babel-eslint
-  let contributor = getContributor();
+  let contributor = getFirstContributor();
 
   let ret = {
     contributor,
@@ -371,7 +375,7 @@ document.addEventListener("DOMContentLoaded", () => {
       .then(({ _showPrivateRepos }) => {
         if (!_showPrivateRepos && isPrivate()) return;
 
-          if (getContributor()) {
+          if (getFirstContributor()) {
             update(getContributorInfo());
           }
       });
