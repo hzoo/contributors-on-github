@@ -10,6 +10,7 @@
   },
   "permissions": [
     "https://github.com/*/*",
+    "https://api.github.com/*",
     "storage",
     "identity"
   ],
@@ -41,5 +42,10 @@
   "options_ui": {
     "page": "options.html",
     "chrome_style": true
+  },
+  "applications": {
+    "gecko": {
+      "id": "contributors-on-github@hzoo.github.com"
+    }
   }
 }
