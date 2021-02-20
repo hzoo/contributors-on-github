@@ -1,55 +1,22 @@
-// https://github.com/octo-linker/injection 0.2.0
+// https://github.com/octo-linker/injection 1.0.1
 'use strict';
 
-var gitHubInjection = function (global, cb) {
-  if (!global) {
-    throw new Error('Missing argument global');
-  }
-
-  if (!global.document || !global.document.getElementById) {
-    throw new Error('The given argument global is not a valid window object');
-  }
-
+const gitHubInjection = cb => {
   if (!cb) {
     throw new Error('Missing argument callback');
   }
 
   if (typeof cb !== 'function') {
-    throw new Error('Callback is not a function');
+    throw new TypeError('Callback is not a function');
   }
 
-  var domElement = global.document.getElementById('js-repo-pjax-container');
-  if (!domElement || !global.MutationObserver) {
-    return cb(null);
-  }
-
-  var viewSpy = new global.MutationObserver(function (mutations) {
-    mutations.forEach(function (mutation) {
-      if (mutation.type === 'childList' && mutation.addedNodes.length) {
-        cb(null);
-      }
-    });
-  });
-
-  viewSpy.observe(domElement, {
-    attributes: true,
-    childList: true,
-    characterData: true
-  });
-
-  cb(null);
+  document.addEventListener('pjax:end', cb);
+  cb();
 };
 
-// Export the gitHubInjection function for **Node.js**, with
-// backwards-compatibility for the old `require()` API. If we're in
-// the browser, add `gitHubInjection` as a global object.
+// Export the gitHubInjection function for **Node.js**
+// Otherwise leave it as a global
 if (typeof exports !== 'undefined') {
-  if (typeof module !== 'undefined' && module.exports) {
-    exports = module.exports = gitHubInjection;
-  }
-  exports.gitHubInjection = gitHubInjection;
-} else {
-  /*jshint -W040 */
-  this.gitHubInjection = gitHubInjection;
-  /*jshint +W040 */
+  module.exports = gitHubInjection;
+  exports = module.exports;
 }

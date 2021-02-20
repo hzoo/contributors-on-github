@@ -369,7 +369,7 @@ function update({ contributor, repoPath, currentNum, user }) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  gitHubInjection(window, () => {
+  gitHubInjection(() => {
     if (isPR(location.pathname) || isIssue(location.pathname)) {
       getSyncStorage({ "_showPrivateRepos": null })
       .then(({ _showPrivateRepos }) => {
