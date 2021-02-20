@@ -45,7 +45,7 @@ If necessary, you may want to create or get a "access token" that uses the `publ
 
 ---
 
-## Local Install
+## Local Install (Chrome)
 
 - Download the zip, and unzip it
 
@@ -56,6 +56,13 @@ If necessary, you may want to create or get a "access token" that uses the `publ
 - Select the `src` folder of the unzipped folder you downloaded
 
 Now try it out!
+
+## Local Install (Firefox)
+
+- Go to [`about:debugging#/runtime/this-firefox`](about:debugging#/runtime/this-firefox)
+- Click on `Load Temporary Add-on…`
+- Select the `manifest.json` file in the `src` folder you downloaded
+- You're done! It should also show up in `about:addons`
 
 ---
 
