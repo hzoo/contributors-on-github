@@ -54,7 +54,6 @@ function buildUrl({
   sort,
   order,
   per_page,
-  access_token,
 }) {
   let query = `${base}?q=`;
   query += `${author ? `+author:${author}` : ""}`;
@@ -90,7 +89,6 @@ function contributorCount({
   }
 
   let searchURL = buildUrl({
-    access_token,
     base: "https://api.github.com/search/issues",
     order: "asc",
     per_page: "1",
@@ -103,7 +101,11 @@ function contributorCount({
     sort: "created",
   });
 
-  return fetch(searchURL)
+  return fetch(searchURL, {
+    headers: {
+      Authorization: `token ${access_token}`,
+    },
+  })
     .then((res) => res.json())
     .then(function (json) {
       if (json.errors || json.message) {
