@@ -1,22 +1,21 @@
 "use strict";
 
-/* global $, getSyncStorage, setStorage, getStorage, gitHubInjection */
+/* global getSyncStorage, setStorage, getStorage, gitHubInjection */
 
 const isPR = (path) => /^\/[^/]+\/[^/]+\/pull\/\d+/.test(path);
 const isIssue = (path) => /^\/[^/]+\/[^/]+\/issues\/\d+/.test(path);
-const getCurrentUser = () => $(".js-menu-target img").attr("alt").slice(1) || "";
-const isPrivate = () => $(".label-private").length > 0;
+const getCurrentUser = () =>
+  document.querySelector(".Header-link img")?.getAttribute("alt")?.slice(1) ||
+  "";
+const isPrivate = () =>
+  document.querySelector(".Label")?.innerText === "Private";
 let statsScope = "repo";
 
 // Get the username of the first contributor *in the DOM* of the page
 function getFirstContributor() {
   // refined-github has a comprehensive selector. https://github.com/sindresorhus/refined-github/blob/3aadf2f9141107d7ca92e8753f2a66cbc10ebd9d/source/features/show-names.tsx#L13-L16
   // But we only need usernames within PR & Issue threads..
-  const usernameElements = $('.timeline-comment a.author');
-
-  if (usernameElements.length) {
-    return usernameElements.first().text().trim();
-  }
+  return document.querySelector(".timeline-comment a.author")?.innerText;
 }
 
 function getContributorInfo() {
@@ -31,7 +30,7 @@ function getContributorInfo() {
   let ret = {
     contributor,
     currentNum,
-    repoPath
+    repoPath,
   };
 
   // global variable
@@ -49,22 +48,36 @@ function getContributorInfo() {
   return ret;
 }
 
-function buildUrl({base, q: {type, filterUser, author, repo, user}, sort, order, per_page, access_token}) {
+function buildUrl({
+  base,
+  q: { type, filterUser, author, repo, user },
+  sort,
+  order,
+  per_page,
+  access_token,
+}) {
   let query = `${base}?q=`;
-  query += `${author ? `+author:${author}`: ""}`;
-  query += `${repo ? `+repo:${repo}`: ""}`;
-  query += `${user ? `+user:${user}`: ""}`;
-  query += `${type ? `+type:${type}`: ""}`;
-  query += `${filterUser ? `+-user:${filterUser}`: ""}`;
-  query += `${access_token ? `&access_token=${access_token}`: ""}`;
-  query += `${order ? `&order=${order}`: ""}`;
-  query += `${per_page ? `&per_page=${per_page}`: ""}`;
-  query += `${sort ? `&sort=${sort}`: ""}`;
+  query += `${author ? `+author:${author}` : ""}`;
+  query += `${repo ? `+repo:${repo}` : ""}`;
+  query += `${user ? `+user:${user}` : ""}`;
+  query += `${type ? `+type:${type}` : ""}`;
+  query += `${filterUser ? `+-user:${filterUser}` : ""}`;
+  query += `${access_token ? `&access_token=${access_token}` : ""}`;
+  query += `${order ? `&order=${order}` : ""}`;
+  query += `${per_page ? `&per_page=${per_page}` : ""}`;
+  query += `${sort ? `&sort=${sort}` : ""}`;
 
   return query;
 }
 
-function contributorCount({access_token, contributor, user, repoPath, old = {}, type}) {
+function contributorCount({
+  access_token,
+  contributor,
+  user,
+  repoPath,
+  old = {},
+  type,
+}) {
   let repo = repoPath;
 
   // global variable
@@ -85,42 +98,43 @@ function contributorCount({access_token, contributor, user, repoPath, old = {}, 
       type,
       repo,
       author: contributor,
-      user: user
+      user: user,
     },
-    sort: "created"
+    sort: "created",
   });
 
   return fetch(searchURL)
-  .then((res) => res.json())
-  .then(function(json) {
-    if (json.errors || json.message) {
-      return json;
-    }
+    .then((res) => res.json())
+    .then(function (json) {
+      if (json.errors || json.message) {
+        return json;
+      }
 
-    let obj = {
-      lastUpdate: Date.now()
-    };
+      let obj = {
+        lastUpdate: Date.now(),
+      };
 
-    if (type === "pr") {
-      obj.prs = json.total_count;
-    } else if (type === "issue") {
-      obj.issues = json.total_count;
-    }
+      if (type === "pr") {
+        obj.prs = json.total_count;
+      } else if (type === "issue") {
+        obj.issues = json.total_count;
+      }
 
-    if (json.items && json.items.length) {
-      obj[`first${type[0].toUpperCase() + type.slice(1)}Number`] = json.items[0].number;
-    }
+      if (json.items && json.items.length) {
+        obj[`first${type[0].toUpperCase() + type.slice(1)}Number`] =
+          json.items[0].number;
+      }
 
-    obj = Object.assign(old, obj);
+      obj = Object.assign(old, obj);
 
-    setStorage(contributor, repoPath, obj);
+      setStorage(contributor, repoPath, obj);
 
-    return obj;
-  });
+      return obj;
+    });
 }
 
 function appendPRText(currentNum, repoInfo) {
-  let {issues, prs, firstPrNumber, firstIssueNumber} = repoInfo;
+  let { issues, prs, firstPrNumber, firstIssueNumber } = repoInfo;
 
   if (prs !== undefined) {
     let prText = `${prs}`;
@@ -174,26 +188,28 @@ function makeUpdateLabel(time) {
 }
 
 function issueOrPrLink(type, repoPath, contributor) {
-  let end = `${type === "pr" ? "pulls" : "issues"}?utf8=%E2%9C%93&q=is:both+is:${type}+author:${contributor}`;
+  let end = `${
+    type === "pr" ? "pulls" : "issues"
+  }?utf8=%E2%9C%93&q=is:both+is:${type}+author:${contributor}`;
 
   // repo
   if (repoPath.split("/").length === 2) {
     return `/${repoPath}/${end}`;
-  // account
+    // account
   } else if (repoPath === "__self") {
     return `https://github.com/${end}`;
-  // org
+    // org
   } else {
     return `https://github.com/${end}+user:${repoPath}`;
   }
 }
 
 function injectInitialUI({ contributor, repoPath }) {
-  let $elem = $(".timeline-comment-header-text").first();
+  let $elem = document.querySelector(".timeline-comment-header-text");
   let prId = "gce-num-prs";
   let prText = makeLabel("Loading..", "git-pull-request");
 
-  if ($(`#${prId}`).length) return;
+  if (!!document.getElementById(`${prId}`)) return;
 
   let issueId = "gce-num-issues";
   let issueText = makeLabel("Loading..", "git-issue-opened");
@@ -221,78 +237,112 @@ function injectInitialUI({ contributor, repoPath }) {
       </a>
     </details-menu>
   </details>`;
-
-  $elem.before(`<span class="timeline-comment-label">
-<a href="${issueOrPrLink("pr", repoPath, contributor)}" id="${prId}">${prText}</a>
-<a href="${issueOrPrLink("issue", repoPath, contributor)}" id="${issueId}">${issueText}</a>
+  $elem.insertAdjacentHTML(
+    "beforebegin",
+    `<span class="timeline-comment-label">
+<a href="${issueOrPrLink(
+      "pr",
+      repoPath,
+      contributor
+    )}" id="${prId}">${prText}</a>
+<a href="${issueOrPrLink(
+      "issue",
+      repoPath,
+      contributor
+    )}" id="${issueId}">${issueText}</a>
 ${dropdown}
 </span>
-  `);
-  $elem.before(`<a class="timeline-comment-label" style="cursor:pointer;" id="gce-update">${updateText}</a>`);
-  $elem.before(`<a id="gce-update-time" class="timeline-comment-label">N/A</a>`);
+  `
+  );
+  $elem.insertAdjacentHTML(
+    "beforebegin",
+    `<a class="timeline-comment-label" style="cursor:pointer;" id="gce-update">${updateText}</a>`
+  );
+  $elem.insertAdjacentHTML(
+    "beforebegin",
+    `<a id="gce-update-time" class="timeline-comment-label">N/A</a>`
+  );
 
-  let $update = $("#gce-update");
-  $update.dom[0].addEventListener("click", function() {
+  let $update = document.getElementById("gce-update");
+  $update.addEventListener("click", function () {
     setStorage(contributor, repoPath, {});
     update(getContributorInfo());
   });
 
-  let $inThisOrg = $("#gce-in-this-org");
-  let $inThisRepo = $("#gce-in-this-repo");
-  let $inThisAccount = $("#gce-in-this-account");
-  let $dropdownText = $("#gce-dropdown-text");
+  let $inThisOrg = document.getElementById("gce-in-this-org");
+  let $inThisRepo = document.getElementById("gce-in-this-repo");
+  let $inThisAccount = document.getElementById("gce-in-this-account");
+  let $dropdownText = document.getElementById("gce-dropdown-text");
 
-  $inThisOrg.dom[0].addEventListener("click", function() {
-    $inThisOrg.addClass("selected");
-    $inThisRepo.removeClass("selected");
-    $inThisAccount.removeClass("selected");
+  $inThisOrg.addEventListener("click", function () {
+    $inThisOrg.classList.add("selected");
+    $inThisRepo.classList.remove("selected");
+    $inThisAccount.classList.remove("selected");
 
-    $inThisOrg.html(`${$checkbox} in this org`);
-    $dropdownText.html("in this org");
+    $inThisOrg.innerHTML = `${$checkbox} in this org`;
+    $dropdownText.innerHTML = "in this org";
 
-    $inThisAccount.html("in this account");
-    $inThisRepo.html("in this repo");
+    $inThisAccount.innerHTML = "in this account";
+    $inThisRepo.innerHTML = "in this repo";
 
-    $(`#${prId}`).attr("href", issueOrPrLink("pr", repoPath.split("/")[0], contributor));
-    $(`#${issueId}`).attr("href", issueOrPrLink("issue", repoPath.split("/")[0], contributor));
+    document
+      .getElementById(`${prId}`)
+      .setAttribute(
+        "href",
+        issueOrPrLink("pr", repoPath.split("/")[0], contributor)
+      );
+    document
+      .getElementById(`${issueId}`)
+      .setAttribute(
+        "href",
+        issueOrPrLink("issue", repoPath.split("/")[0], contributor)
+      );
 
     // global
     statsScope = "org";
     update(getContributorInfo());
   });
 
-  $inThisRepo.dom[0].addEventListener("click", function() {
-    $inThisRepo.addClass("selected");
-    $inThisOrg.removeClass("selected");
-    $inThisAccount.removeClass("selected");
+  $inThisRepo.addEventListener("click", function () {
+    $inThisRepo.classList.add("selected");
+    $inThisOrg.classList.remove("selected");
+    $inThisAccount.classList.remove("selected");
 
-    $inThisRepo.html(`${$checkbox} in this repo`);
-    $dropdownText.html("in this repo");
+    $inThisRepo.innerHTML = `${$checkbox} in this repo`;
+    $dropdownText.innerHTML = "in this repo";
 
-    $inThisAccount.html("in this account");
-    $inThisOrg.html("in this org");
+    $inThisAccount.innerHTML = "in this account";
+    $inThisOrg.innerHTML = "in this org";
 
-    $(`#${prId}`).attr("href", issueOrPrLink("pr", repoPath, contributor));
-    $(`#${issueId}`).attr("href", issueOrPrLink("issue", repoPath, contributor));
+    document
+      .getElementById(`${prId}`)
+      .setAttribute("href", issueOrPrLink("pr", repoPath, contributor));
+    document
+      .getElementById(`${issueId}`)
+      .setAttribute("href", issueOrPrLink("issue", repoPath, contributor));
 
     // global
     statsScope = "repo";
     update(getContributorInfo());
   });
 
-  $inThisAccount.dom[0].addEventListener("click", function() {
-    $inThisAccount.addClass("selected");
-    $inThisOrg.removeClass("selected");
-    $inThisRepo.removeClass("selected");
+  $inThisAccount.addEventListener("click", function () {
+    $inThisAccount.classList.add("selected");
+    $inThisOrg.classList.remove("selected");
+    $inThisRepo.classList.remove("selected");
 
-    $inThisAccount.html(`${$checkbox} in this account`);
-    $dropdownText.html("in this account");
+    $inThisAccount.innerHTML = `${$checkbox} in this account`;
+    $dropdownText.innerHTML = "in this account";
 
-    $inThisRepo.html("in this repo");
-    $inThisOrg.html("in this org");
+    $inThisRepo.innerHTML = "in this repo";
+    $inThisOrg.innerHTML = "in this org";
 
-    $(`#${prId}`).attr("href", issueOrPrLink("pr", "__self", contributor));
-    $(`#${issueId}`).attr("href", issueOrPrLink("issue", "__self", contributor));
+    document
+      .getElementById(`${prId}`)
+      .setAttribute("href", issueOrPrLink("pr", "__self", contributor));
+    document
+      .getElementById(`${issueId}`)
+      .setAttribute("href", issueOrPrLink("issue", "__self", contributor));
 
     // global
     statsScope = "account";
@@ -301,25 +351,30 @@ ${dropdown}
 }
 
 function updateTextNodes({ prText, issueText, lastUpdate }) {
-  let prNode = $("#gce-num-prs .timeline-comment-label-text");
-  if (prNode.length) {
-    prNode.text(prText);
+  let prNode = document.querySelector(
+    "#gce-num-prs .timeline-comment-label-text"
+  );
+  if (!!prNode) {
+    prNode.textContent = prText;
   }
 
-  let issueNode = $("#gce-num-issues .timeline-comment-label-text");
-  if (issueNode.length) {
-    issueNode.text(issueText);
+  let issueNode = document.querySelector(
+    "#gce-num-issues .timeline-comment-label-text"
+  );
+  if (!!issueNode) {
+    issueNode.textContent = issueText;
   }
 
-  let updateTime = $("#gce-update-time");
+  let updateTime = document.querySelector("#gce-update-time");
   if (updateTime && typeof lastUpdate === "number") {
-    updateTime.html(`<span>Last Updated </span>${makeUpdateLabel(new Date(lastUpdate))}`);
+    updateTime.innerHTML = `<span>Last Updated </span>${makeUpdateLabel(
+      new Date(lastUpdate)
+    )}`;
   }
 }
 
 function update({ contributor, repoPath, currentNum, user }) {
-  getStorage(contributor, repoPath)
-  .then((storage) => {
+  getStorage(contributor, repoPath).then((storage) => {
     let path = repoPath;
     if (user) {
       path = user;
@@ -332,13 +387,25 @@ function update({ contributor, repoPath, currentNum, user }) {
     if (storageRes.prs || storageRes.issues) {
       updateTextNodes(appendPRText(currentNum, storageRes));
     } else {
-      getSyncStorage({ "access_token": null })
-      .then((res) => {
+      getSyncStorage({ access_token: null }).then((res) => {
         Promise.all([
-          contributorCount({ old: storageRes, user, access_token: res.access_token, type: "pr", contributor, repoPath}),
-          contributorCount({ old: storageRes, user, access_token: res.access_token, type: "issue", contributor, repoPath})
-        ])
-        .then(([prInfo, issueInfo]) => {
+          contributorCount({
+            old: storageRes,
+            user,
+            access_token: res.access_token,
+            type: "pr",
+            contributor,
+            repoPath,
+          }),
+          contributorCount({
+            old: storageRes,
+            user,
+            access_token: res.access_token,
+            type: "issue",
+            contributor,
+            repoPath,
+          }),
+        ]).then(([prInfo, issueInfo]) => {
           let repoInfo = Object.assign(prInfo, issueInfo);
 
           if (repoInfo.errors) {
@@ -348,7 +415,11 @@ function update({ contributor, repoPath, currentNum, user }) {
 
           if (repoInfo.message) {
             // API rate limit exceeded for hzoo.
-            if (repoInfo.message.indexOf(`API rate limit exceeded for ${getCurrentUser()}`) >= 0) {
+            if (
+              repoInfo.message.indexOf(
+                `API rate limit exceeded for ${getCurrentUser()}`
+              ) >= 0
+            ) {
               updateTextNodes("More than 30 req/min :D");
               return;
             }
@@ -357,7 +428,9 @@ function update({ contributor, repoPath, currentNum, user }) {
             // (But here's the good news: Authenticated requests get a higher rate limit.
             // Check out the documentation for more details.)
             if (repoInfo.message.indexOf("the good news") >= 0) {
-              updateTextNodes("More than 10 req/min: Maybe add a access_token!");
+              updateTextNodes(
+                "More than 10 req/min: Maybe add a access_token!"
+              );
               return;
             }
           }
@@ -371,14 +444,15 @@ function update({ contributor, repoPath, currentNum, user }) {
 document.addEventListener("DOMContentLoaded", () => {
   gitHubInjection(() => {
     if (isPR(location.pathname) || isIssue(location.pathname)) {
-      getSyncStorage({ "_showPrivateRepos": null })
-      .then(({ _showPrivateRepos }) => {
-        if (!_showPrivateRepos && isPrivate()) return;
+      getSyncStorage({ _showPrivateRepos: null }).then(
+        ({ _showPrivateRepos }) => {
+          if (!_showPrivateRepos && isPrivate()) return;
 
           if (getFirstContributor()) {
             update(getContributorInfo());
           }
-      });
+        }
+      );
     }
   });
 });

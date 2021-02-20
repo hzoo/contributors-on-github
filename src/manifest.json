@@ -16,27 +16,16 @@
   ],
   "background": {
     "persistent": false,
-    "scripts": [
-      "background.js"
-    ]
+    "scripts": ["background.js"]
   },
   "manifest_version": 2,
-  "minimum_chrome_version": "49",
+  "minimum_chrome_version": "80",
   "content_scripts": [
     {
       "run_at": "document_start",
-      "matches": [
-        "https://github.com/*/*"
-      ],
-      "css": [
-        "content.css"
-      ],
-      "js": [
-        "storage.js",
-        "vendor/github-injection.js",
-        "vendor/sprint.min.js",
-        "content.js"
-      ]
+      "matches": ["https://github.com/*/*"],
+      "css": ["content.css"],
+      "js": ["storage.js", "vendor/github-injection.js", "content.js"]
     }
   ],
   "options_ui": {
@@ -45,7 +34,8 @@
   },
   "applications": {
     "gecko": {
-      "id": "contributors-on-github@hzoo.github.com"
+      "id": "contributors-on-github-test@hzoo.github.com",
+      "strict_min_version": "74.0"
     }
   }
 }
