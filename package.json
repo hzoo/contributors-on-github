@@ -5,11 +5,7 @@
   "description": "Show github contributor's stats (# of Issues/PRs)",
   "main": "index.js",
   "dependencies": {},
-  "devDependencies": {
-    "chrome-webstore-upload-cli": "^1.0.3"
-  },
   "scripts": {
-    "release": "./node_modules/.bin/webstore upload --source=src --auto-publish",
     "test": "echo \"Error: no test specified\""
   },
   "repository": {
