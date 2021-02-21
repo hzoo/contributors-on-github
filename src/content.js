@@ -61,7 +61,6 @@ function buildUrl({
   query += `${user ? `+user:${user}` : ""}`;
   query += `${type ? `+type:${type}` : ""}`;
   query += `${filterUser ? `+-user:${filterUser}` : ""}`;
-  query += `${access_token ? `&access_token=${access_token}` : ""}`;
   query += `${order ? `&order=${order}` : ""}`;
   query += `${per_page ? `&per_page=${per_page}` : ""}`;
   query += `${sort ? `&sort=${sort}` : ""}`;
