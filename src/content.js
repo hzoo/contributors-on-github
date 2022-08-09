@@ -206,7 +206,7 @@ function issueOrPrLink(type, repoPath, contributor) {
 }
 
 function injectInitialUI({ contributor, repoPath }) {
-  let $elem = document.querySelector(".timeline-comment-header-text");
+  let $elem = document.querySelector(".timeline-comment-header>h3");
   let prId = "gce-num-prs";
   let prText = makeLabel("Loading..", "git-pull-request");
 
