@@ -8,6 +8,23 @@ const SELECTORS = {
 	FIRST_CONTRIBUTOR: ".timeline-comment a.author",
 };
 
+// Use GitHub's current icon styling
+const ICONS = {
+	PR: `<svg aria-hidden="true" class="octicon octicon-git-pull-request" height="16" width="16" viewBox="0 0 16 16" version="1.1" role="img" fill="currentColor" style="display: inline-block; user-select: none; vertical-align: text-bottom; overflow: visible;"><path d="M1.5 3.25a2.25 2.25 0 1 1 3 2.122v5.256a2.251 2.251 0 1 1-1.5 0V5.372A2.25 2.25 0 0 1 1.5 3.25Zm5.677-.177L9.573.677A.25.25 0 0 1 10 .854V2.5h1A2.5 2.5 0 0 1 13.5 5v5.628a2.251 2.251 0 1 1-1.5 0V5a1 1 0 0 0-1-1h-1v1.646a.25.25 0 0 1-.427.177L7.177 3.427a.25.25 0 0 1 0-.354ZM3.75 2.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Zm0 9.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Zm8.25.75a.75.75 0 1 0 1.5 0 .75.75 0 0 0-1.5 0Z"></path></svg>`,
+	ISSUE: `<svg aria-hidden="true" class="octicon octicon-issue-opened" height="16" width="16" viewBox="0 0 16 16" version="1.1" role="img" fill="currentColor" style="display: inline-block; user-select: none; vertical-align: text-bottom; overflow: visible;"><path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"></path><path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"></path></svg>`,
+	SYNC: `<svg aria-hidden="true" class="octicon octicon-sync" height="16" width="16" viewBox="0 0 16 16" version="1.1" role="img" fill="currentColor" style="display: inline-block; user-select: none; vertical-align: text-bottom; overflow: visible;"><path d="M8 2.5a5.487 5.487 0 0 0-4.131 1.869l1.204 1.204A.25.25 0 0 1 4.896 6H1.25A.25.25 0 0 1 1 5.75V2.104a.25.25 0 0 1 .427-.177l1.38 1.38A7.001 7.001 0 0 1 14.95 7.16a.75.75 0 0 1-1.49.178A5.501 5.501 0 0 0 8 2.5ZM1.705 8.005a.75.75 0 0 1 .834.656 5.501 5.501 0 0 0 9.592 2.97l-1.204-1.204a.25.25 0 0 1 .177-.427h3.646a.25.25 0 0 1 .25.25v3.646a.25.25 0 0 1-.427.177l-1.38-1.38A7.001 7.001 0 0 1 1.05 8.84a.75.75 0 0 1 .656-.834Z"></path></svg>`,
+};
+
+const ELEMENT_IDS = {
+	CONTAINER: "gce-container",
+	HOVER_PANEL: "gce-hover-panel",
+	PR_COUNT: "gce-num-prs",
+	ISSUE_COUNT: "gce-num-issues",
+	SYNC_BUTTON: "gce-sync-button",
+	UPDATE_TIME: "gce-update-time",
+};
+
+// Path and user detection helpers
 const isPR = (path) => /^\/[^/]+\/[^/]+\/pull\/\d+/.test(path);
 const isIssue = (path) => /^\/[^/]+\/[^/]+\/issues\/\d+/.test(path);
 const getCurrentUser = () =>
@@ -153,126 +170,98 @@ function issueOrPrLink(type, repoPath, contributor) {
 	return `https://github.com/${end}+user:${repoPath}`;
 }
 
-// Use GitHub's current icon styling
-const prIcon = `<svg aria-hidden="true" class="octicon octicon-git-pull-request" height="16" width="16" viewBox="0 0 16 16" version="1.1" role="img" fill="currentColor" style="display: inline-block; user-select: none; vertical-align: text-bottom; overflow: visible;"><path d="M1.5 3.25a2.25 2.25 0 1 1 3 2.122v5.256a2.251 2.251 0 1 1-1.5 0V5.372A2.25 2.25 0 0 1 1.5 3.25Zm5.677-.177L9.573.677A.25.25 0 0 1 10 .854V2.5h1A2.5 2.5 0 0 1 13.5 5v5.628a2.251 2.251 0 1 1-1.5 0V5a1 1 0 0 0-1-1h-1v1.646a.25.25 0 0 1-.427.177L7.177 3.427a.25.25 0 0 1 0-.354ZM3.75 2.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Zm0 9.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Zm8.25.75a.75.75 0 1 0 1.5 0 .75.75 0 0 0-1.5 0Z"></path></svg>`;
-const issueIcon = `<svg aria-hidden="true" class="octicon octicon-issue-opened" height="16" width="16" viewBox="0 0 16 16" version="1.1" role="img" fill="currentColor" style="display: inline-block; user-select: none; vertical-align: text-bottom; overflow: visible;"><path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"></path><path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"></path></svg>`;
-const syncIcon = `<svg aria-hidden="true" class="octicon octicon-sync" height="16" width="16" viewBox="0 0 16 16" version="1.1" role="img" fill="currentColor" style="display: inline-block; user-select: none; vertical-align: text-bottom; overflow: visible;"><path d="M8 2.5a5.487 5.487 0 0 0-4.131 1.869l1.204 1.204A.25.25 0 0 1 4.896 6H1.25A.25.25 0 0 1 1 5.75V2.104a.25.25 0 0 1 .427-.177l1.38 1.38A7.001 7.001 0 0 1 14.95 7.16a.75.75 0 0 1-1.49.178A5.501 5.501 0 0 0 8 2.5ZM1.705 8.005a.75.75 0 0 1 .834.656 5.501 5.501 0 0 0 9.592 2.97l-1.204-1.204a.25.25 0 0 1 .177-.427h3.646a.25.25 0 0 1 .25.25v3.646a.25.25 0 0 1-.427.177l-1.38-1.38A7.001 7.001 0 0 1 1.05 8.84a.75.75 0 0 1 .656-.834Z"></path></svg>`;
-
-function injectInitialUI({ contributor, repoPath, currentNum, org }) {
-	const $elem = document.querySelector(SELECTORS.TIMELINE_COMMENT_HEADER);
-	const prId = "gce-num-prs";
-	const issueId = "gce-num-issues";
-
-	// Don't inject if already present
-	if (document.getElementById(`${prId}`)) return;
-
-	// Create the main container with GitHub utility classes
-	$elem.insertAdjacentHTML(
-		"beforebegin",
-		`<div class="d-flex flex-items-center position-relative" id="gce-container">
-      <div class="d-flex flex-items-center position-relative">
-        <a href="${issueOrPrLink("pr", repoPath, contributor)}" 
-           id="${prId}" 
-           class="Link--secondary color-fg-muted d-inline-flex flex-items-center no-underline mr-3" 
-           aria-label="Pull requests by this user">
-           ${prIcon}<span class="ml-1 Text-sc-17v1xeu-0" style="font-size: 12px; line-height: 1.5;">${"..."}</span>
-        </a>
-        <a href="${issueOrPrLink("issue", repoPath, contributor)}" 
-           id="${issueId}" 
-           class="Link--secondary color-fg-muted d-inline-flex flex-items-center no-underline" 
-           aria-label="Issues by this user">
-           ${issueIcon}<span class="ml-1 Text-sc-17v1xeu-0" style="font-size: 12px; line-height: 1.5;">${"..."}</span>
-        </a>
-        
-        <!-- Hover panel with all scopes -->
-        <div id="gce-hover-panel" class="position-absolute Box color-shadow-medium rounded-2 p-3" style="z-index: 100; top: 100%; left: -125px; min-width: 280px; margin-top: 4px;">
-          <!-- Repo stats -->
-          <div class="d-flex flex-items-center mb-2 py-1">
-            <div class="gce-scope-label">
-              <span class="f6 color-fg-muted">In this repo:</span>
-            </div>
-            <div class="d-flex flex-items-center ml-auto">
-              <div class="d-inline-flex flex-items-center mr-3">
-                ${prIcon}<span class="ml-1 Text-sc-17v1xeu-0 gce-stat-number" id="gce-repo-pr-count">...</span>
-              </div>
-              <div class="d-inline-flex flex-items-center">
-                ${issueIcon}<span class="ml-1 Text-sc-17v1xeu-0 gce-stat-number" id="gce-repo-issue-count">...</span>
-              </div>
-            </div>
+function createHoverPanelHTML({ contributor, repoPath }) {
+	return `
+    <div id="${ELEMENT_IDS.HOVER_PANEL}" class="position-absolute Box color-shadow-medium rounded-2 p-2" style="display: none; z-index: 100; top: 100%; left: -146px; min-width: 250px; margin-top: 4px;">
+      <!-- Repo stats -->
+      <div class="d-flex flex-items-center py-1">
+        <div class="gce-scope-label">
+          <span class="f6 color-fg-muted">In this repo:</span>
+        </div>
+        <div class="d-flex flex-items-center ml-auto">
+          <div class="d-inline-flex flex-items-center mr-2">
+            ${ICONS.PR}<span class="ml-1 Text-sc-17v1xeu-0 gce-stat-number" id="gce-repo-pr-count">...</span>
           </div>
-          
-          <!-- Org stats -->
-          <div class="d-flex flex-items-center mb-2 py-1">
-            <div class="gce-scope-label">
-              <span class="f6 color-fg-muted">In this org:</span>
-            </div>
-            <div class="d-flex flex-items-center ml-auto">
-              <div class="d-inline-flex flex-items-center mr-3">
-                ${prIcon}<span class="ml-1 Text-sc-17v1xeu-0 gce-stat-number" id="gce-org-pr-count">...</span>
-              </div>
-              <div class="d-inline-flex flex-items-center">
-                ${issueIcon}<span class="ml-1 Text-sc-17v1xeu-0 gce-stat-number" id="gce-org-issue-count">...</span>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Account stats -->
-          <div class="d-flex flex-items-center mb-2 py-1">
-            <div class="gce-scope-label">
-              <span class="f6 color-fg-muted">In this account:</span>
-            </div>
-            <div class="d-flex flex-items-center ml-auto">
-              <div class="d-inline-flex flex-items-center mr-3">
-                ${prIcon}<span class="ml-1 Text-sc-17v1xeu-0 gce-stat-number" id="gce-account-pr-count">...</span>
-              </div>
-              <div class="d-inline-flex flex-items-center">
-                ${issueIcon}<span class="ml-1 Text-sc-17v1xeu-0 gce-stat-number" id="gce-account-issue-count">...</span>
-              </div>
-            </div>
-          </div>
-          
-          <div class="border-top my-2"></div>
-          <div class="d-flex flex-items-center">
-            <button id="gce-sync-button" class="btn-link Link--secondary d-flex flex-items-center py-1 color-fg-muted">
-              ${syncIcon}
-              <span class="ml-2 f6">refresh</span>
-            </button>
-            <span class="color-fg-subtle f6 ml-auto" id="gce-update-time"></span>
+          <div class="d-inline-flex flex-items-center">
+            ${ICONS.ISSUE}<span class="ml-1 Text-sc-17v1xeu-0 gce-stat-number" id="gce-repo-issue-count">...</span>
           </div>
         </div>
       </div>
-    </div>`,
-	);
+      
+      <!-- Org stats -->
+      <div class="d-flex flex-items-center py-1">
+        <div class="gce-scope-label">
+          <span class="f6 color-fg-muted">In this org:</span>
+        </div>
+        <div class="d-flex flex-items-center ml-auto">
+          <div class="d-inline-flex flex-items-center mr-2">
+            ${ICONS.PR}<span class="ml-1 Text-sc-17v1xeu-0 gce-stat-number" id="gce-org-pr-count">...</span>
+          </div>
+          <div class="d-inline-flex flex-items-center">
+            ${ICONS.ISSUE}<span class="ml-1 Text-sc-17v1xeu-0 gce-stat-number" id="gce-org-issue-count">...</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Account stats -->
+      <div class="d-flex flex-items-center py-1">
+        <div class="gce-scope-label">
+          <span class="f6 color-fg-muted">In this account:</span>
+        </div>
+        <div class="d-flex flex-items-center ml-auto">
+          <div class="d-inline-flex flex-items-center mr-2">
+            ${ICONS.PR}<span class="ml-1 Text-sc-17v1xeu-0 gce-stat-number" id="gce-account-pr-count">...</span>
+          </div>
+          <div class="d-inline-flex flex-items-center">
+            ${ICONS.ISSUE}<span class="ml-1 Text-sc-17v1xeu-0 gce-stat-number" id="gce-account-issue-count">...</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="border-top mt-1 mb-1"></div>
+      <div class="d-flex flex-items-center">
+        <button id="${ELEMENT_IDS.SYNC_BUTTON}" class="btn-link Link--secondary d-flex flex-items-center color-fg-muted">
+          ${ICONS.SYNC}
+          <span class="ml-1 f6">refresh</span>
+        </button>
+        <span class="color-fg-subtle f6 ml-auto" id="${ELEMENT_IDS.UPDATE_TIME}"></span>
+      </div>
+    </div>
+  `;
+}
 
-	// Add responsive styles and hover behavior
+function injectStyles() {
 	const styleEl = document.createElement('style');
 	styleEl.id = 'gce-responsive-styles';
 	styleEl.textContent = `
-		#gce-container {
+		#${ELEMENT_IDS.CONTAINER} {
 			margin-right: 8px;
 			align-items: center;
 		}
-		#gce-container svg {
+		#${ELEMENT_IDS.CONTAINER} svg {
 			vertical-align: text-bottom;
 		}
-		#gce-hover-panel {
+		#${ELEMENT_IDS.HOVER_PANEL} {
 			box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
 			border: 1px solid var(--color-border-default);
 			background-color: var(--color-canvas-default);
 		}
-		#gce-hover-panel .Text-sc-17v1xeu-0 {
+		#${ELEMENT_IDS.HOVER_PANEL} .Text-sc-17v1xeu-0 {
 			font-size: 12px;
 			line-height: 1.5;
 		}
 		.gce-scope-label {
-			width: 110px;
+			width: 90px;
 			flex-shrink: 0;
 		}
 		.gce-stat-number {
-			min-width: 40px;
+			min-width: 24px;
 			display: inline-block;
 			text-align: right;
 			font-variant-numeric: tabular-nums;
+		}
+		#${ELEMENT_IDS.SYNC_BUTTON} {
+			padding: 2px 0;
 		}
 		@media (max-width: 768px) {
 			.timeline-comment-header {
@@ -281,10 +270,49 @@ function injectInitialUI({ contributor, repoPath, currentNum, org }) {
 		}
 	`;
 	document.head.appendChild(styleEl);
+}
 
-	// Set up hover behavior
-	const $container = document.getElementById("gce-container");
-	const $hoverPanel = document.getElementById("gce-hover-panel");
+function injectInitialUI({ contributor, repoPath, currentNum, org }) {
+	const $elem = document.querySelector(SELECTORS.TIMELINE_COMMENT_HEADER);
+	
+	// Don't inject if already present
+	if (document.getElementById(ELEMENT_IDS.PR_COUNT)) return;
+
+	// Create the main container with GitHub utility classes
+	$elem.insertAdjacentHTML(
+		"beforebegin",
+		`<div class="d-flex flex-items-center position-relative" id="${ELEMENT_IDS.CONTAINER}">
+      <div class="d-flex flex-items-center position-relative">
+        <a href="${issueOrPrLink("pr", repoPath, contributor)}" 
+           id="${ELEMENT_IDS.PR_COUNT}" 
+           class="Link--secondary color-fg-muted d-inline-flex flex-items-center no-underline mr-2" 
+           aria-label="Pull requests by this user">
+           ${ICONS.PR}<span class="ml-1 Text-sc-17v1xeu-0" style="font-size: 12px; line-height: 1.5;">${"..."}</span>
+        </a>
+        <a href="${issueOrPrLink("issue", repoPath, contributor)}" 
+           id="${ELEMENT_IDS.ISSUE_COUNT}" 
+           class="Link--secondary color-fg-muted d-inline-flex flex-items-center no-underline" 
+           aria-label="Issues by this user">
+           ${ICONS.ISSUE}<span class="ml-1 Text-sc-17v1xeu-0" style="font-size: 12px; line-height: 1.5;">${"..."}</span>
+        </a>
+        
+        ${createHoverPanelHTML({ contributor, repoPath })}
+      </div>
+    </div>`,
+	);
+
+	injectStyles();
+	setupHoverBehavior();
+	setupSyncButton({ contributor, repoPath, currentNum, org });
+	
+	// Initial fetch of all stats
+	fetchAllStats({ contributor, repoPath, currentNum, org });
+}
+
+// Set up hover behavior for the panel
+function setupHoverBehavior() {
+	const $container = document.getElementById(ELEMENT_IDS.CONTAINER);
+	const $hoverPanel = document.getElementById(ELEMENT_IDS.HOVER_PANEL);
 	const $statsContainer = $container.querySelector(".d-flex.flex-items-center");
 	
 	let isPanelVisible = false;
@@ -322,8 +350,11 @@ function injectInitialUI({ contributor, repoPath, currentNum, org }) {
 			hidePanel();
 		}
 	});
+}
 
-	const $syncButton = document.getElementById("gce-sync-button");
+// Set up the sync button functionality
+function setupSyncButton({ contributor, repoPath, currentNum, org }) {
+	const $syncButton = document.getElementById(ELEMENT_IDS.SYNC_BUTTON);
 	$syncButton.addEventListener("click", () => {
 		// Clear all stats and fetch fresh data
 		setStorage(contributor, repoPath, {});
@@ -333,9 +364,6 @@ function injectInitialUI({ contributor, repoPath, currentNum, org }) {
 		// Fetch all scopes
 		fetchAllStats({ contributor, repoPath, currentNum, org });
 	});
-
-	// Initial fetch of all stats
-	fetchAllStats({ contributor, repoPath, currentNum, org });
 }
 
 // Fetch stats for all scopes (repo, org, account)
@@ -348,6 +376,71 @@ function fetchAllStats({ contributor, repoPath, currentNum, org }) {
 	
 	// Fetch account stats
 	fetchStats({ contributor, repoPath: "__self", currentNum, scope: "account" });
+}
+
+// Handle API errors and update UI accordingly
+function handleApiError(repoInfo, scope) {
+	if (repoInfo.errors) {
+		const errorMessage = repoInfo.errors[0].message;
+		updateStatsDisplay({ prText: "Error", issueText: "Error", scope });
+		showToast(`API Error: ${errorMessage}`);
+		return true;
+	}
+
+	if (repoInfo.message) {
+		// API rate limit exceeded for hzoo.
+		if (
+			repoInfo.message.indexOf(
+				`API rate limit exceeded for ${getCurrentUser()}`,
+			) >= 0
+		) {
+			updateStatsDisplay({
+				prText: "Rate limited",
+				issueText: "Rate limited",
+				scope,
+			});
+			showToast(
+				"API rate limit exceeded. Try again later or add an access token in the [Contributors on Github] settings.",
+				"warning",
+			);
+			return true;
+		}
+
+		// Bad credentials error
+		if (repoInfo.message === "Bad credentials") {
+			updateStatsDisplay({
+				prText: "Auth error",
+				issueText: "Auth error",
+				scope,
+			});
+			showToast(
+				"Your GitHub token is invalid or has expired. Please update it in the [Contributors on Github] options.",
+				"warning",
+			);
+			return true;
+		}
+
+		// API rate limit exceeded for x.x.x.x.
+		if (repoInfo.message.indexOf("the good news") >= 0) {
+			updateStatsDisplay({
+				prText: "Auth needed",
+				issueText: "Auth needed",
+				scope,
+			});
+			showToast(
+				"GitHub API rate limit reached. Please add an access token in the [Contributors on Github] settings.",
+				"warning",
+			);
+			return true;
+		}
+
+		// Generic error
+		updateStatsDisplay({ prText: "Error", issueText: "Error", scope });
+		showToast(`GitHub API Error: ${repoInfo.message}`);
+		return true;
+	}
+
+	return false;
 }
 
 // Fetch stats for a specific scope
@@ -387,63 +480,7 @@ function fetchStats({ contributor, repoPath, currentNum, scope, user }) {
 					.then(([prInfo, issueInfo]) => {
 						const repoInfo = Object.assign(prInfo, issueInfo);
 
-						if (repoInfo.errors) {
-							const errorMessage = repoInfo.errors[0].message;
-							updateStatsDisplay({ prText: "Error", issueText: "Error", scope });
-							showToast(`API Error: ${errorMessage}`);
-							return;
-						}
-
-						if (repoInfo.message) {
-							// API rate limit exceeded for hzoo.
-							if (
-								repoInfo.message.indexOf(
-									`API rate limit exceeded for ${getCurrentUser()}`,
-								) >= 0
-							) {
-								updateStatsDisplay({
-									prText: "Rate limited",
-									issueText: "Rate limited",
-									scope,
-								});
-								showToast(
-									"API rate limit exceeded. Try again later or add an access token in the [Contributors on Github] settings.",
-									"warning",
-								);
-								return;
-							}
-
-							// Bad credentials error
-							if (repoInfo.message === "Bad credentials") {
-								updateStatsDisplay({
-									prText: "Auth error",
-									issueText: "Auth error",
-									scope,
-								});
-								showToast(
-									"Your GitHub token is invalid or has expired. Please update it in the [Contributors on Github] options.",
-									"warning",
-								);
-								return;
-							}
-
-							// API rate limit exceeded for x.x.x.x.
-							if (repoInfo.message.indexOf("the good news") >= 0) {
-								updateStatsDisplay({
-									prText: "Auth needed",
-									issueText: "Auth needed",
-									scope,
-								});
-								showToast(
-									"GitHub API rate limit reached. Please add an access token in the [Contributors on Github] settings.",
-									"warning",
-								);
-								return;
-							}
-
-							// Generic error
-							updateStatsDisplay({ prText: "Error", issueText: "Error", scope });
-							showToast(`GitHub API Error: ${repoInfo.message}`);
+						if (handleApiError(repoInfo, scope)) {
 							return;
 						}
 
@@ -470,29 +507,29 @@ function fetchStats({ contributor, repoPath, currentNum, scope, user }) {
 	});
 }
 
+// Pad numbers for consistent width
+function padNumber(text) {
+	// Only pad if it's a number
+	const num = Number(text);
+	if (!Number.isNaN(num) && text !== "...") {
+		// Right-align with space padding (only pad to 3 digits for compactness)
+		return text.toString().padStart(3, ' ');
+	}
+	return text;
+}
+
 function updateStatsDisplay({ prText, issueText, scope, lastUpdate }) {
 	// Update the main display (always shows repo stats)
 	if (scope === "repo") {
-		const prNode = document.getElementById("gce-num-prs").querySelector("span");
+		const prNode = document.getElementById(ELEMENT_IDS.PR_COUNT).querySelector("span");
 		if (prNode) {
 			prNode.textContent = prText;
 		}
 
-		const issueNode = document.getElementById("gce-num-issues").querySelector("span");
+		const issueNode = document.getElementById(ELEMENT_IDS.ISSUE_COUNT).querySelector("span");
 		if (issueNode) {
 			issueNode.textContent = issueText;
 		}
-	}
-	
-	// Pad numbers for consistent width (up to 9999)
-	function padNumber(text) {
-		// Only pad if it's a number
-		const num = Number(text);
-		if (!Number.isNaN(num) && text !== "...") {
-			// Right-align with space padding
-			return text.toString().padStart(4, ' ');
-		}
-		return text;
 	}
 	
 	// Update the hover panel stats based on scope
@@ -506,7 +543,12 @@ function updateStatsDisplay({ prText, issueText, scope, lastUpdate }) {
 		issueScopeNode.textContent = padNumber(issueText);
 	}
 
-	const updateTime = document.getElementById("gce-update-time");
+	updateTimestamp(lastUpdate);
+}
+
+// Update the timestamp display
+function updateTimestamp(lastUpdate) {
+	const updateTime = document.getElementById(ELEMENT_IDS.UPDATE_TIME);
 	if (updateTime && typeof lastUpdate === "number") {
 		// Format the time in a more compact way
 		const now = new Date();
