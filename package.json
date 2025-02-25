@@ -4,7 +4,6 @@
   "version": "1.0.7",
   "description": "Show github contributor's stats (# of Issues/PRs)",
   "main": "index.js",
-  "dependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\""
   },

@@ -24,8 +24,7 @@
     {
       "run_at": "document_start",
       "matches": ["https://github.com/*/*"],
-      "css": ["content.css"],
-      "js": ["storage.js", "vendor/github-injection.js", "content.js"]
+      "js": ["query-string.js", "storage.js", "vendor/github-injection.js", "content.js"]
     }
   ],
   "options_ui": {

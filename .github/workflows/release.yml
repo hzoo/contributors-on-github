@@ -1,69 +1,68 @@
 env:
   DIRECTORY: src
+  PROJECT_NAME: contributors-on-github
 
 # FILE GENERATED WITH: npx ghat fregante/ghatemplates/webext
 # SOURCE: https://github.com/fregante/ghatemplates
-# OPTIONS: {"set":["on.schedule=[{\"cron\": \"41 12 1 * *\"}]"]}
 
 name: Release
 on:
   workflow_dispatch: null
-  schedule:
-    - cron: 41 12 1 * *
 jobs:
   Version:
     outputs:
-      created: ${{ steps.daily-version.outputs.created }}
-      version: ${{ steps.daily-version.outputs.version }}
+      created: ${{ env.DAILY_VERSION_CREATED }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
+      - name: Create tag if necessary
+        uses: fregante/daily-version-action@v2
+      - name: Update manifest.json with version ${{ env.DAILY_VERSION}}
+        if: env.DAILY_VERSION_CREATED
+        run: npx dot-json@1 "$DIRECTORY/manifest.json" version "$DAILY_VERSION"
+      - name: Ready for "submit" jobs
+        if: env.DAILY_VERSION_CREATED
+        uses: actions/upload-artifact@v4
         with:
-          fetch-depth: 20
-      - name: install
-        run: npm ci || npm install
-      - run: npm test
-      - uses: fregante/daily-version-action@v1
-        name: Create tag if necessary
-        id: daily-version
-      - uses: fregante/release-with-changelog@v3
-        if: steps.daily-version.outputs.created
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          exclude: true
-  Submit:
-    needs: Version
-    if: github.event_name == 'workflow_dispatch' || needs.Version.outputs.created
-    strategy:
-      fail-fast: false
-      matrix:
-        command:
-          - firefox
-          - chrome
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: install
-        run: npm ci || npm install
-      - run: npm run build --if-present
-      - name: Update extension’s meta
-        run: >-
-          npx dot-json@1 $DIRECTORY/manifest.json version ${{
-          needs.Version.outputs.version }}
-      - name: Submit
+          path: ${{ env.DIRECTORY }}
+      - name: Create release
+        if: env.DAILY_VERSION_CREATED
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        working-directory: ${{ env.DIRECTORY }}
         run: |
-          case ${{ matrix.command }} in
-            chrome)
-              cd $DIRECTORY && npx chrome-webstore-upload-cli@1 upload --auto-publish
-              ;;
-            firefox)
-              cd $DIRECTORY && npx web-ext-submit@5
-              ;;
-          esac
+          FILENAME="$PROJECT_NAME-$DAILY_VERSION-for-local-testing-only.zip"
+          zip -r "$FILENAME" ./*
+          # Create as draft to curate it before sending it out
+          gh release create "$DAILY_VERSION" "$FILENAME" --draft --generate-notes
+  Chrome:
+    if: needs.Version.outputs.created
+    needs: Version
+    name: Submit (Chrome)
+    environment: Chrome
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+      - run: npx chrome-webstore-upload-cli@3
+        working-directory: artifact
         env:
           EXTENSION_ID: ${{ secrets.EXTENSION_ID }}
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
           REFRESH_TOKEN: ${{ secrets.REFRESH_TOKEN }}
+  Firefox:
+    if: needs.Version.outputs.created
+    needs: Version
+    name: Submit (Firefox)
+    environment: Firefox
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+      - name: Upload build and source code
+        run: npx web-ext@8 sign --channel listed
+        working-directory: artifact
+        env:
           WEB_EXT_API_KEY: ${{ secrets.WEB_EXT_API_KEY }}
           WEB_EXT_API_SECRET: ${{ secrets.WEB_EXT_API_SECRET }}

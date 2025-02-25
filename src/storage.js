@@ -1,49 +1,48 @@
 /* global chrome */
 
-function promisify(func) {
-  if (func && typeof func.then === "function") {
-    return func;
-  }
-
-  return function(keys) {
-    return new Promise(function (resolve, reject) {
-      func(keys, function(arg) {
-        let err = chrome.runtime.lastError;
+// Modern promisify using async/await
+function promisify(chromeFunc) {
+  return async (keys) => {
+    return new Promise((resolve, reject) => {
+      chromeFunc(keys, (result) => {
+        const err = chrome.runtime.lastError;
         if (err) {
           reject(err);
         } else {
-          if (arg) {
-            resolve(arg);
-          } else {
-            resolve();
-          }
+          resolve(result || {});
         }
       });
     });
   };
 }
 
-window.getSyncStorage = promisify(chrome.storage.sync.get.bind(chrome.storage.sync));
-window.setSyncStorage = promisify(chrome.storage.sync.set.bind(chrome.storage.sync));
+// Use const instead of window properties
+const getSyncStorage = promisify(chrome.storage.sync.get.bind(chrome.storage.sync));
+const setSyncStorage = promisify(chrome.storage.sync.set.bind(chrome.storage.sync));
 
-window.setStorage = (CONTRIBUTOR, ORG_REPO_PATH, value) => {
-  return window.setSyncStorage({
-    [`${CONTRIBUTOR}|${ORG_REPO_PATH}`]: value
-  })
-  .catch((e) => {
+// Use async/await for cleaner promise handling
+async function setStorage(contributor, orgRepoPath, value) {
+  try {
+    return await setSyncStorage({
+      [`${contributor}|${orgRepoPath}`]: value
+    });
+  } catch (e) {
     if (e.message === "MAX_ITEMS quota exceeded") {
-      getSyncStorage({ "access_token": null })
-      .then(({ access_token }) => {
-        if (access_token) {
-          chrome.storage.sync.clear(() => {
-            setSyncStorage({ "access_token": access_token });
-          });
-        }
-      });
+      const { access_token } = await getSyncStorage({ "access_token": null });
+      if (access_token) {
+        await new Promise(resolve => chrome.storage.sync.clear(resolve));
+        await setSyncStorage({ "access_token": access_token });
+      }
     }
-  });
-};
+  }
+}
 
-window.getStorage = (CONTRIBUTOR, ORG_REPO_PATH) => {
-  return window.getSyncStorage(`${CONTRIBUTOR}|${ORG_REPO_PATH}`);
-};
+async function getStorage(contributor, orgRepoPath) {
+  return getSyncStorage(`${contributor}|${orgRepoPath}`);
+}
+
+// Export functions properly
+window.getSyncStorage = getSyncStorage;
+window.setSyncStorage = setSyncStorage;
+window.setStorage = setStorage;
+window.getStorage = getStorage;

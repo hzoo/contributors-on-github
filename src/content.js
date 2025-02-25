@@ -1,33 +1,37 @@
-"use strict";
-
 /* global getSyncStorage, setStorage, getStorage, gitHubInjection */
+
+// Define key selectors as constants for easier maintenance
+const SELECTORS = {
+  TIMELINE_COMMENT_HEADER: ".timeline-comment-header>h3",
+  CURRENT_USER_IMG: ".Header-link img",
+  PRIVATE_LABEL: ".Label",
+  FIRST_CONTRIBUTOR: ".timeline-comment a.author"
+};
 
 const isPR = (path) => /^\/[^/]+\/[^/]+\/pull\/\d+/.test(path);
 const isIssue = (path) => /^\/[^/]+\/[^/]+\/issues\/\d+/.test(path);
 const getCurrentUser = () =>
-  document.querySelector(".Header-link img")?.getAttribute("alt")?.slice(1) ||
+  document.querySelector(SELECTORS.CURRENT_USER_IMG)?.getAttribute("alt")?.slice(1) ||
   "";
 const isPrivate = () =>
-  document.querySelector(".Label")?.innerText === "Private";
+  document.querySelector(SELECTORS.PRIVATE_LABEL)?.innerText === "Private";
 let statsScope = "repo";
 
 // Get the username of the first contributor *in the DOM* of the page
 function getFirstContributor() {
-  // refined-github has a comprehensive selector. https://github.com/sindresorhus/refined-github/blob/3aadf2f9141107d7ca92e8753f2a66cbc10ebd9d/source/features/show-names.tsx#L13-L16
-  // But we only need usernames within PR & Issue threads..
-  return document.querySelector(".timeline-comment a.author")?.innerText;
+  return document.querySelector(SELECTORS.FIRST_CONTRIBUTOR)?.innerText;
 }
 
 function getContributorInfo() {
   // "/babel/babel-eslint/pull/1"
-  let pathNameArr = location.pathname.split("/");
-  let org = pathNameArr[1]; // babel
-  let repo = pathNameArr[2]; // babel-eslint
-  let currentNum = pathNameArr[4]; // 3390
-  let repoPath = org + "/" + repo; // babel/babel-eslint
-  let contributor = getFirstContributor();
+  const pathNameArr = location.pathname.split("/");
+  const org = pathNameArr[1]; // babel
+  const repo = pathNameArr[2]; // babel-eslint
+  const currentNum = pathNameArr[4]; // 3390
+  const repoPath = `${org}/${repo}`; // babel/babel-eslint
+  const contributor = getFirstContributor();
 
-  let ret = {
+  const ret = {
     contributor,
     currentNum,
     repoPath,
@@ -87,7 +91,7 @@ function contributorCount({
     repoPath = "__self";
   }
 
-  let searchURL = buildUrl({
+  const searchURL = buildUrl({
     base: "https://api.github.com/search/issues",
     order: "asc",
     per_page: "1",
@@ -106,7 +110,7 @@ function contributorCount({
     },
   })
     .then((res) => res.json())
-    .then(function (json) {
+    .then((json) => {
       if (json.errors || json.message) {
         return json;
       }
@@ -121,7 +125,7 @@ function contributorCount({
         obj.issues = json.total_count;
       }
 
-      if (json.items && json.items.length) {
+      if (json.items?.length) {
         obj[`first${type[0].toUpperCase() + type.slice(1)}Number`] =
           json.items[0].number;
       }
@@ -135,7 +139,7 @@ function contributorCount({
 }
 
 function appendPRText(currentNum, repoInfo) {
-  let { issues, prs, firstPrNumber, firstIssueNumber } = repoInfo;
+  const { issues, prs, firstPrNumber, firstIssueNumber } = repoInfo;
 
   if (prs !== undefined) {
     let prText = `${prs}`;
@@ -162,216 +166,220 @@ function appendPRText(currentNum, repoInfo) {
   return repoInfo;
 }
 
-function getIconPath(icon) {
-  if (icon === "git-issue-opened") {
-    return `<path d="M7 2.3c3.14 0 5.7 2.56 5.7 5.7S10.14 13.7 7 13.7 1.3 11.14 1.3 8s2.56-5.7 5.7-5.7m0-1.3C3.14 1 0 4.14 0 8s3.14 7 7 7 7-3.14 7-7S10.86 1 7 1z m1 3H6v5h2V4z m0 6H6v2h2V10z" />`;
-  } else if (icon === "git-pull-request") {
-    return `<path d="M11 11.28c0-1.73 0-6.28 0-6.28-0.03-0.78-0.34-1.47-0.94-2.06s-1.28-0.91-2.06-0.94c0 0-1.02 0-1 0V0L4 3l3 3V4h1c0.27 0.02 0.48 0.11 0.69 0.31s0.3 0.42 0.31 0.69v6.28c-0.59 0.34-1 0.98-1 1.72 0 1.11 0.89 2 2 2s2-0.89 2-2c0-0.73-0.41-1.38-1-1.72z m-1 2.92c-0.66 0-1.2-0.55-1.2-1.2s0.55-1.2 1.2-1.2 1.2 0.55 1.2 1.2-0.55 1.2-1.2 1.2zM4 3c0-1.11-0.89-2-2-2S0 1.89 0 3c0 0.73 0.41 1.38 1 1.72 0 1.55 0 5.56 0 6.56-0.59 0.34-1 0.98-1 1.72 0 1.11 0.89 2 2 2s2-0.89 2-2c0-0.73-0.41-1.38-1-1.72V4.72c0.59-0.34 1-0.98 1-1.72z m-0.8 10c0 0.66-0.55 1.2-1.2 1.2s-1.2-0.55-1.2-1.2 0.55-1.2 1.2-1.2 1.2 0.55 1.2 1.2z m-1.2-8.8c-0.66 0-1.2-0.55-1.2-1.2s0.55-1.2 1.2-1.2 1.2 0.55 1.2 1.2-0.55 1.2-1.2 1.2z" />`;
-  } else if (icon === "sync") {
-    return `<path d="M10.24 7.4c0.19 1.28-0.2 2.62-1.2 3.6-1.47 1.45-3.74 1.63-5.41 0.54l1.17-1.14L0.5 9.8 1.1 14l1.31-1.26c2.36 1.74 5.7 1.57 7.84-0.54 1.24-1.23 1.81-2.85 1.74-4.46L10.24 7.4zM2.96 5c1.47-1.45 3.74-1.63 5.41-0.54l-1.17 1.14 4.3 0.6L10.9 2l-1.31 1.26C7.23 1.52 3.89 1.69 1.74 3.8 0.5 5.03-0.06 6.65 0.01 8.26l1.75 0.35C1.57 7.33 1.96 5.98 2.96 5z" />`;
-  }
-}
-
-function makeIcon(icon) {
-  return `<svg aria-hidden="true" class="octicon octicon-${icon}" height="14" role="img" version="1.1" viewBox="0 0 14 16" width="14">
-    ${getIconPath(icon)}
-  </svg>`;
-}
-
-function makeLabel(text, octicon) {
-  return `${octicon ? makeIcon(octicon) : ""}
-<span class="timeline-comment-label-text">${text}</span>
-`;
-}
-
-function makeUpdateLabel(time) {
-  return `<relative-time datetime="${time}"></relative-time>`;
-}
-
 function issueOrPrLink(type, repoPath, contributor) {
-  let end = `${
+  const end = `${
     type === "pr" ? "pulls" : "issues"
-  }?utf8=%E2%9C%93&q=is:both+is:${type}+author:${contributor}`;
+  }?utf8=%E2%9C%93&q=is:${type}+author:${contributor}`;
 
   // repo
   if (repoPath.split("/").length === 2) {
     return `/${repoPath}/${end}`;
     // account
-  } else if (repoPath === "__self") {
-    return `https://github.com/${end}`;
-    // org
-  } else {
-    return `https://github.com/${end}+user:${repoPath}`;
   }
+  if (repoPath === "__self") {
+    return `https://github.com/${end}`;
+  }
+
+  // org
+  return `https://github.com/${end}+user:${repoPath}`;
 }
 
 function injectInitialUI({ contributor, repoPath }) {
-  let $elem = document.querySelector(".timeline-comment-header>h3");
-  let prId = "gce-num-prs";
-  let prText = makeLabel("Loading..", "git-pull-request");
+  const $elem = document.querySelector(SELECTORS.TIMELINE_COMMENT_HEADER);
+  const prId = "gce-num-prs";
+  const issueId = "gce-num-issues";
+  
+  if (document.getElementById(`${prId}`)) return;
 
-  if (!!document.getElementById(`${prId}`)) return;
+  // Use GitHub's current icon styling
+  const prIcon = `<svg aria-hidden="true" class="octicon octicon-git-pull-request" height="16" width="16" viewBox="0 0 16 16" version="1.1" role="img"><path d="M1.5 3.25a2.25 2.25 0 1 1 3 2.122v5.256a2.251 2.251 0 1 1-1.5 0V5.372A2.25 2.25 0 0 1 1.5 3.25Zm5.677-.177L9.573.677A.25.25 0 0 1 10 .854V2.5h1A2.5 2.5 0 0 1 13.5 5v5.628a2.251 2.251 0 1 1-1.5 0V5a1 1 0 0 0-1-1h-1v1.646a.25.25 0 0 1-.427.177L7.177 3.427a.25.25 0 0 1 0-.354ZM3.75 2.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Zm0 9.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Zm8.25.75a.75.75 0 1 0 1.5 0 .75.75 0 0 0-1.5 0Z"></path></svg>`;
+  const issueIcon = `<svg aria-hidden="true" class="octicon octicon-issue-opened" height="16" width="16" viewBox="0 0 16 16" version="1.1" role="img"><path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"></path><path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"></path></svg>`;
+  const syncIcon = `<svg aria-hidden="true" class="octicon octicon-sync" height="16" width="16" viewBox="0 0 16 16" version="1.1" role="img"><path d="M8 2.5a5.487 5.487 0 0 0-4.131 1.869l1.204 1.204A.25.25 0 0 1 4.896 6H1.25A.25.25 0 0 1 1 5.75V2.104a.25.25 0 0 1 .427-.177l1.38 1.38A7.001 7.001 0 0 1 14.95 7.16a.75.75 0 0 1-1.49.178A5.501 5.501 0 0 0 8 2.5ZM1.705 8.005a.75.75 0 0 1 .834.656 5.501 5.501 0 0 0 9.592 2.97l-1.204-1.204a.25.25 0 0 1 .177-.427h3.646a.25.25 0 0 1 .25.25v3.646a.25.25 0 0 1-.427.177l-1.38-1.38A7.001 7.001 0 0 1 1.05 8.84a.75.75 0 0 1 .656-.834Z"></path></svg>`;
+  const checkIcon = `<svg aria-hidden="true" class="octicon octicon-check" height="16" width="16" viewBox="0 0 16 16" version="1.1" role="img"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path></svg>`;
 
-  let issueId = "gce-num-issues";
-  let issueText = makeLabel("Loading..", "git-issue-opened");
-  let updateText = makeLabel("", "sync");
-  let $checkbox = `<svg aria-hidden="true" class="octicon octicon-check" height="16" version="1.1" viewBox="0 0 12 16" width="12"><path d="M12 5L4 13 0 9l1.5-1.5 2.5 2.5 6.5-6.5 1.5 1.5z"></path></svg>`;
-
-  let dropdown = `<details class="details-overlay details-reset" aria-haspopup="menu" id="gce-dropdown-container">
-    <summary class="btn-link muted-link js-menu-target">
-      <span id="gce-dropdown-text">in this repo</span>
-      <span class="dropdown-caret"></span>
-    </summary>
-    <details-menu class="dropdown-menu dropdown-menu-sw" role="menu">
-      <div class="dropdown-header">
-        View options
+  // Create dropdown menu similar to GitHub's current style - removed button styling
+  const dropdown = `
+    <details class="details-overlay details-reset position-relative d-inline-block">
+      <summary class="btn-link Link--secondary" aria-haspopup="menu" role="button">
+        <span id="gce-dropdown-text">repo</span>
+        <span class="dropdown-caret"></span>
+      </summary>
+      <div class="dropdown-menu dropdown-menu-sw">
+        <div class="dropdown-header">
+          View options
+        </div>
+        <a class="dropdown-item d-flex flex-items-center selected" id="gce-in-this-repo">
+          ${checkIcon}
+          <span class="ml-2">in this repo</span>
+        </a>
+        <a class="dropdown-item d-flex flex-items-center" id="gce-in-this-org">
+          <span class="ml-4">in this org</span>
+        </a>
+        <a class="dropdown-item d-flex flex-items-center" id="gce-in-this-account">
+          <span class="ml-4">in this account</span>
+        </a>
+        <div class="dropdown-divider"></div>
+        <a id="gce-sync-button" class="dropdown-item d-flex flex-items-center">
+          ${syncIcon}
+          <span class="ml-2">Refresh stats</span>
+        </a>
+        <div class="dropdown-divider"></div>
+        <div class="px-3 py-1 color-fg-subtle f6 text-center" id="gce-update-time"></div>
       </div>
-      <a role="menuitem" class="dropdown-item selected" id="gce-in-this-repo">
-          ${$checkbox}
-        in this repo
-      </a>
-      <a role="menuitem" class="dropdown-item" id="gce-in-this-org">
-        in this org
-      </a>
-      <a role="menuitem" class="dropdown-item" id="gce-in-this-account">
-        in this account
-      </a>
-    </details-menu>
-  </details>`;
+    </details>`;
+  
+  // Create the main container with GitHub utility classes
   $elem.insertAdjacentHTML(
     "beforebegin",
-    `<span class="timeline-comment-label">
-<a href="${issueOrPrLink(
-      "pr",
-      repoPath,
-      contributor
-    )}" id="${prId}">${prText}</a>
-<a href="${issueOrPrLink(
-      "issue",
-      repoPath,
-      contributor
-    )}" id="${issueId}">${issueText}</a>
-${dropdown}
-</span>
-  `
-  );
-  $elem.insertAdjacentHTML(
-    "beforebegin",
-    `<a class="timeline-comment-label" style="cursor:pointer;" id="gce-update">${updateText}</a>`
-  );
-  $elem.insertAdjacentHTML(
-    "beforebegin",
-    `<a id="gce-update-time" class="timeline-comment-label">N/A</a>`
+    `<div class="d-flex flex-items-center">
+      <a href="${issueOrPrLink("pr", repoPath, contributor)}" 
+         id="${prId}" 
+         class="d-flex flex-items-center mr-2 Link--secondary no-underline" 
+         aria-label="Pull requests by this user">
+         ${prIcon}
+         <span class="ml-1" id="gce-pr-count">..</span>
+      </a>
+      <a href="${issueOrPrLink("issue", repoPath, contributor)}" 
+         id="${issueId}" 
+         class="d-flex flex-items-center mr-2 Link--secondary no-underline" 
+         aria-label="Issues by this user">
+         ${issueIcon}
+         <span class="ml-1" id="gce-issue-count">..</span>
+      </a>
+      ${dropdown}
+    </div>`
   );
 
-  let $update = document.getElementById("gce-update");
-  $update.addEventListener("click", function () {
+  const $syncButton = document.getElementById("gce-sync-button");
+  $syncButton.addEventListener("click", () => {
     setStorage(contributor, repoPath, {});
     update(getContributorInfo());
   });
 
-  let $inThisOrg = document.getElementById("gce-in-this-org");
-  let $inThisRepo = document.getElementById("gce-in-this-repo");
-  let $inThisAccount = document.getElementById("gce-in-this-account");
-  let $dropdownText = document.getElementById("gce-dropdown-text");
+  const $inThisOrg = document.getElementById("gce-in-this-org");
+  const $inThisRepo = document.getElementById("gce-in-this-repo");
+  const $inThisAccount = document.getElementById("gce-in-this-account");
+  const $dropdownText = document.getElementById("gce-dropdown-text");
 
-  $inThisOrg.addEventListener("click", function () {
-    $inThisOrg.classList.add("selected");
-    $inThisRepo.classList.remove("selected");
-    $inThisAccount.classList.remove("selected");
+  // Simplified event handlers with helper function
+  function updateScope(scope, scopeText) {
+    return () => {
+      // Update selected state
+      $inThisRepo.classList.toggle('selected', scope === 'repo');
+      $inThisOrg.classList.toggle('selected', scope === 'org');
+      $inThisAccount.classList.toggle('selected', scope === 'account');
+      
+      // Update dropdown text
+      $dropdownText.textContent = scopeText;
+      
+      // Update icons
+      $inThisRepo.innerHTML = scope === 'repo' 
+        ? `${checkIcon}<span class="ml-2">in this repo</span>` 
+        : `<span class="ml-4">in this repo</span>`;
+      
+      $inThisOrg.innerHTML = scope === 'org' 
+        ? `${checkIcon}<span class="ml-2">in this org</span>` 
+        : `<span class="ml-4">in this org</span>`;
+      
+      $inThisAccount.innerHTML = scope === 'account' 
+        ? `${checkIcon}<span class="ml-2">in this account</span>` 
+        : `<span class="ml-4">in this account</span>`;
+      
+      // Update links
+      let href;
+      if (scope === 'org') {
+        href = repoPath.split("/")[0];
+      } else if (scope === 'account') {
+        href = "__self";
+      } else {
+        href = repoPath;
+      }
+      
+      document.getElementById(prId).setAttribute("href", issueOrPrLink("pr", href, contributor));
+      document.getElementById(issueId).setAttribute("href", issueOrPrLink("issue", href, contributor));
+      
+      // Update global scope and refresh data
+      statsScope = scope;
+      update(getContributorInfo());
+    };
+  }
 
-    $inThisOrg.innerHTML = `${$checkbox} in this org`;
-    $dropdownText.innerHTML = "in this org";
-
-    $inThisAccount.innerHTML = "in this account";
-    $inThisRepo.innerHTML = "in this repo";
-
-    document
-      .getElementById(`${prId}`)
-      .setAttribute(
-        "href",
-        issueOrPrLink("pr", repoPath.split("/")[0], contributor)
-      );
-    document
-      .getElementById(`${issueId}`)
-      .setAttribute(
-        "href",
-        issueOrPrLink("issue", repoPath.split("/")[0], contributor)
-      );
-
-    // global
-    statsScope = "org";
-    update(getContributorInfo());
-  });
-
-  $inThisRepo.addEventListener("click", function () {
-    $inThisRepo.classList.add("selected");
-    $inThisOrg.classList.remove("selected");
-    $inThisAccount.classList.remove("selected");
-
-    $inThisRepo.innerHTML = `${$checkbox} in this repo`;
-    $dropdownText.innerHTML = "in this repo";
-
-    $inThisAccount.innerHTML = "in this account";
-    $inThisOrg.innerHTML = "in this org";
-
-    document
-      .getElementById(`${prId}`)
-      .setAttribute("href", issueOrPrLink("pr", repoPath, contributor));
-    document
-      .getElementById(`${issueId}`)
-      .setAttribute("href", issueOrPrLink("issue", repoPath, contributor));
-
-    // global
-    statsScope = "repo";
-    update(getContributorInfo());
-  });
-
-  $inThisAccount.addEventListener("click", function () {
-    $inThisAccount.classList.add("selected");
-    $inThisOrg.classList.remove("selected");
-    $inThisRepo.classList.remove("selected");
-
-    $inThisAccount.innerHTML = `${$checkbox} in this account`;
-    $dropdownText.innerHTML = "in this account";
-
-    $inThisRepo.innerHTML = "in this repo";
-    $inThisOrg.innerHTML = "in this org";
-
-    document
-      .getElementById(`${prId}`)
-      .setAttribute("href", issueOrPrLink("pr", "__self", contributor));
-    document
-      .getElementById(`${issueId}`)
-      .setAttribute("href", issueOrPrLink("issue", "__self", contributor));
-
-    // global
-    statsScope = "account";
-    update(getContributorInfo());
-  });
+  $inThisRepo.addEventListener("click", updateScope('repo', 'repo'));
+  $inThisOrg.addEventListener("click", updateScope('org', 'org'));
+  $inThisAccount.addEventListener("click", updateScope('account', 'account'));
 }
 
 function updateTextNodes({ prText, issueText, lastUpdate }) {
-  let prNode = document.querySelector(
-    "#gce-num-prs .timeline-comment-label-text"
-  );
-  if (!!prNode) {
+  const prNode = document.getElementById("gce-pr-count");
+  if (prNode) {
     prNode.textContent = prText;
   }
 
-  let issueNode = document.querySelector(
-    "#gce-num-issues .timeline-comment-label-text"
-  );
-  if (!!issueNode) {
+  const issueNode = document.getElementById("gce-issue-count");
+  if (issueNode) {
     issueNode.textContent = issueText;
   }
 
-  let updateTime = document.querySelector("#gce-update-time");
+  const updateTime = document.getElementById("gce-update-time");
   if (updateTime && typeof lastUpdate === "number") {
-    updateTime.innerHTML = `<span>Last Updated </span>${makeUpdateLabel(
-      new Date(lastUpdate)
-    )}`;
+    // Format the time in a more compact way
+    const now = new Date();
+    const updated = new Date(lastUpdate);
+    const diffMs = now - updated;
+    const diffMins = Math.round(diffMs / 60000);
+    const diffHours = Math.round(diffMs / 3600000);
+    const diffDays = Math.round(diffMs / 86400000);
+    
+    let timeText = '';
+    if (diffMins < 60) {
+      timeText = `${diffMins}m`;
+    } else if (diffHours < 24) {
+      timeText = `${diffHours}h`;
+    } else {
+      timeText = `${diffDays}d`;
+    }
+    
+    updateTime.textContent = `Updated ${timeText} ago`;
   }
+}
+
+// Improved error handling with toast notifications
+function showToast(message, type = 'error') {
+  // Remove existing toast if any
+  const existingToast = document.getElementById('gce-toast');
+  if (existingToast) {
+    existingToast.remove();
+  }
+  
+  // Create toast element
+  const toast = document.createElement('div');
+  toast.id = 'gce-toast';
+  toast.className = 'position-fixed bottom-0 right-0 m-3 p-3 color-bg-danger-inverse color-fg-on-emphasis rounded-2';
+  toast.style.zIndex = '100';
+  toast.style.maxWidth = '300px';
+  toast.style.boxShadow = '0 3px 6px rgba(0, 0, 0, 0.16)';
+  
+  if (type === 'warning') {
+    toast.className = toast.className.replace('color-bg-danger-inverse', 'color-bg-attention-inverse');
+  }
+  
+  toast.innerHTML = `
+    <div class="d-flex flex-items-center">
+      <svg class="octicon mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
+        <path fill="currentColor" d="M8 16A8 8 0 1 1 8 0a8 8 0 0 1 0 16zm1.5-8.5a1.5 1.5 0 1 0-3 0 1.5 1.5 0 0 0 3 0zM5 5a1 1 0 0 0 0 2h6a1 1 0 1 0 0-2H5z"></path>
+      </svg>
+      <span>${message}</span>
+    </div>
+  `;
+  
+  document.body.appendChild(toast);
+  
+  // Auto-remove after 5 seconds
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.5s ease';
+    setTimeout(() => toast.remove(), 500);
+  }, 5000);
 }
 
 function update({ contributor, repoPath, currentNum, user }) {
@@ -383,7 +391,7 @@ function update({ contributor, repoPath, currentNum, user }) {
       path = "__self";
     }
 
-    let storageRes = storage[`${contributor}|${path}`] || {};
+    const storageRes = storage[`${contributor}|${path}`] || {};
 
     if (storageRes.prs || storageRes.issues) {
       updateTextNodes(appendPRText(currentNum, storageRes));
@@ -407,10 +415,12 @@ function update({ contributor, repoPath, currentNum, user }) {
             repoPath,
           }),
         ]).then(([prInfo, issueInfo]) => {
-          let repoInfo = Object.assign(prInfo, issueInfo);
+          const repoInfo = Object.assign(prInfo, issueInfo);
 
           if (repoInfo.errors) {
-            updateTextNodes(repoInfo.errors[0].message);
+            const errorMessage = repoInfo.errors[0].message;
+            updateTextNodes({ prText: "Error", issueText: "Error" });
+            showToast(`API Error: ${errorMessage}`);
             return;
           }
 
@@ -421,25 +431,77 @@ function update({ contributor, repoPath, currentNum, user }) {
                 `API rate limit exceeded for ${getCurrentUser()}`
               ) >= 0
             ) {
-              updateTextNodes("More than 30 req/min :D");
+              updateTextNodes({ prText: "Rate limited", issueText: "Rate limited" });
+              showToast("API rate limit exceeded. Try again later or add an access token in settings.", "warning");
               return;
             }
 
             // API rate limit exceeded for x.x.x.x.
-            // (But here's the good news: Authenticated requests get a higher rate limit.
-            // Check out the documentation for more details.)
             if (repoInfo.message.indexOf("the good news") >= 0) {
-              updateTextNodes(
-                "More than 10 req/min: Maybe add a access_token!"
-              );
+              updateTextNodes({ prText: "Auth needed", issueText: "Auth needed" });
+              showToast("GitHub API rate limit reached. Please add an access token in the extension settings.", "warning");
               return;
             }
+            
+            // Generic error
+            updateTextNodes({ prText: "Error", issueText: "Error" });
+            showToast(`GitHub API Error: ${repoInfo.message}`);
+            return;
           }
+          
           updateTextNodes(appendPRText(currentNum, repoInfo));
+        }).catch(error => {
+          console.error("GitHub Contributors Extension error:", error);
+          updateTextNodes({ prText: "Error", issueText: "Error" });
+          showToast("Failed to fetch contributor data. Check console for details.");
         });
       });
     }
   });
+}
+
+// Improved caching with local storage
+function getCachedData(key, maxAge = 3600000) { // Default 1 hour cache
+  try {
+    const cached = localStorage.getItem(`gce-cache-${key}`);
+    if (cached) {
+      const { data, timestamp } = JSON.parse(cached);
+      if (Date.now() - timestamp < maxAge) {
+        return data;
+      }
+    }
+    return null;
+  } catch (e) {
+    console.error("Cache read error:", e);
+    return null;
+  }
+}
+
+function setCachedData(key, data) {
+  try {
+    localStorage.setItem(`gce-cache-${key}`, JSON.stringify({
+      data,
+      timestamp: Date.now()
+    }));
+  } catch (e) {
+    console.error("Cache write error:", e);
+    // If localStorage is full, clear old caches
+    try {
+      // Use for...of instead of forEach
+      for (const storageKey of Object.keys(localStorage)) {
+        if (storageKey.startsWith('gce-cache-')) {
+          localStorage.removeItem(storageKey);
+        }
+      }
+      // Try again
+      localStorage.setItem(`gce-cache-${key}`, JSON.stringify({
+        data,
+        timestamp: Date.now()
+      }));
+    } catch (e) {
+      console.error("Failed to clear cache:", e);
+    }
+  }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
