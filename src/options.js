@@ -1,24 +1,49 @@
-/* global getSyncStorage, setSyncStorage */
+/* global getSyncStorage, setSyncStorage, clearAllStorage, STORAGE_KEYS */
+
+/**
+ * Contributors on GitHub - Options Page
+ * Handles the options page functionality for the extension
+ */
+
+// Local storage prefix for contributor data
+const CACHE_PREFIX = "gce-cache-";
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const accessTokenInput = document.getElementById("token-input");
-  const clearCacheLink = document.getElementById("clear-cache");
-  const showPrivateReposInput = document.getElementById("show-private-repos");
+  // DOM elements
+  const elements = {
+    accessTokenInput: document.getElementById("token-input"),
+    clearCacheButton: document.getElementById("clear-cache"),
+    showPrivateReposInput: document.getElementById("show-private-repos"),
+    feedbackElement: document.getElementById("feedback"),
+    githubTokenLink: document.getElementById("gh-token-link")
+  };
   
-  // Load saved settings
-  try {
-    const { access_token, _showPrivateRepos } = await getSyncStorage({ 
-      "access_token": null, 
-      "_showPrivateRepos": null 
-    });
+  /**
+   * Shows feedback message to the user
+   * @param {string} message - The message to display
+   * @param {string} type - The type of message (success, error, warning)
+   */
+  function showFeedback(message, type = 'success') {
+    if (!elements.feedbackElement) return;
     
-    if (access_token) accessTokenInput.value = access_token;
-    if (_showPrivateRepos) showPrivateReposInput.checked = _showPrivateRepos;
-  } catch (error) {
-    showFeedback(`Error loading settings: ${error.message}`, "error");
+    elements.feedbackElement.textContent = message;
+    elements.feedbackElement.style.display = "block";
+    
+    // Reset classes
+    elements.feedbackElement.className = "feedback";
+    elements.feedbackElement.classList.add(type);
+    
+    // Auto-hide after 3 seconds
+    setTimeout(() => {
+      elements.feedbackElement.style.display = "none";
+    }, 3000);
   }
-
-  // Function to validate GitHub token
+  
+  /**
+   * Validates a GitHub token by making a test API call
+   * @param {string} token - The token to validate
+   * @returns {Promise<boolean>} - Whether the token is valid
+   */
   async function validateToken(token) {
     if (!token) return false;
     
@@ -29,47 +54,19 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
       });
       
-      if (response.status === 401) {
-        return false;
-      }
-      
-      return response.ok;
+      return response.status !== 401 && response.ok;
     } catch (error) {
       console.error('Token validation error:', error);
       return false;
     }
   }
-
-  // Helper function to show feedback in the options page
-  function showFeedback(message, type = 'success') {
-    const feedback = document.querySelector("#feedback");
-    if (feedback) {
-      feedback.textContent = message;
-      feedback.style.display = "block";
-      
-      // Reset classes
-      feedback.className = "feedback";
-      
-      // Add appropriate class based on type
-      if (type === 'error') {
-        feedback.classList.add('error');
-      } else if (type === 'warning') {
-        feedback.classList.add('warning');
-      } else {
-        feedback.classList.add('success');
-      }
-      
-      // Auto-hide after 3 seconds
-      setTimeout(() => {
-        feedback.style.display = "none";
-      }, 3000);
-    }
-  }
-
-  // Save token when changed
-  accessTokenInput.addEventListener("change", async () => {
+  
+  /**
+   * Saves the access token after validation
+   */
+  async function saveToken() {
     try {
-      const token = accessTokenInput.value.trim();
+      const token = elements.accessTokenInput.value.trim();
       
       // If token is provided, validate it
       if (token) {
@@ -82,63 +79,78 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
       }
       
-      await setSyncStorage({ "access_token": token });
+      await setSyncStorage({ [STORAGE_KEYS.ACCESS_TOKEN]: token });
       showFeedback("Token saved successfully");
     } catch (error) {
       showFeedback(`Error saving token: ${error.message}`, "error");
     }
-  });
-
-  // Clear cache button click handler
-  clearCacheLink.addEventListener("click", async () => {
+  }
+  
+  /**
+   * Clears only the contributor data cache from localStorage
+   */
+  function clearContributorCache() {
     try {
-      // Save token before clearing
-      const token = accessTokenInput.value;
-      
-      // Clear both sync storage and local cache
-      await new Promise(resolve => chrome.storage.sync.clear(resolve));
-      
-      // Clear local storage cache
       for (const key of Object.keys(localStorage)) {
-        if (key.startsWith('gce-cache-')) {
+        if (key.startsWith(CACHE_PREFIX)) {
           localStorage.removeItem(key);
         }
       }
-      
-      // Restore token if it existed
-      if (token) {
-        // Validate token before restoring
-        const isValid = await validateToken(token);
-        if (isValid) {
-          await setSyncStorage({ "access_token": token });
-        } else {
-          showFeedback("Your token appears to be invalid and was not restored.", "warning");
-          return;
-        }
-      }
-      
-      showFeedback("Cache cleared successfully");
+      showFeedback("Contributor data cache cleared successfully");
     } catch (error) {
       showFeedback(`Error clearing cache: ${error.message}`, "error");
     }
-  });
-
-  // Show private repos checkbox handler
-  showPrivateReposInput.addEventListener("change", async () => {
+  }
+  
+  /**
+   * Saves the "show private repos" setting
+   */
+  async function savePrivateReposSetting() {
     try {
-      await setSyncStorage({ "_showPrivateRepos": showPrivateReposInput.checked });
+      await setSyncStorage({ 
+        [STORAGE_KEYS.SHOW_PRIVATE_REPOS]: elements.showPrivateReposInput.checked 
+      });
       showFeedback("Setting saved");
     } catch (error) {
       showFeedback(`Error saving setting: ${error.message}`, "error");
     }
-  });
-  
-  // Make the GitHub token link work
-  const ghLink = document.getElementById("gh_link");
-  if (ghLink) {
-    ghLink.addEventListener("click", () => {
-      chrome.tabs.create({ url: ghLink.getAttribute("href") });
-    });
   }
+  
+  /**
+   * Initialize the options page
+   */
+  async function initOptions() {
+    // Load saved settings
+    try {
+      const settings = await getSyncStorage({ 
+        [STORAGE_KEYS.ACCESS_TOKEN]: null, 
+        [STORAGE_KEYS.SHOW_PRIVATE_REPOS]: false
+      });
+      
+      if (settings[STORAGE_KEYS.ACCESS_TOKEN]) {
+        elements.accessTokenInput.value = settings[STORAGE_KEYS.ACCESS_TOKEN];
+      }
+      
+      elements.showPrivateReposInput.checked = !!settings[STORAGE_KEYS.SHOW_PRIVATE_REPOS];
+    } catch (error) {
+      showFeedback(`Error loading settings: ${error.message}`, "error");
+    }
+    
+    // Set up event listeners
+    elements.accessTokenInput.addEventListener("change", saveToken);
+    elements.clearCacheButton.addEventListener("click", clearContributorCache);
+    elements.showPrivateReposInput.addEventListener("change", savePrivateReposSetting);
+    
+    // Make the GitHub token link work
+    if (elements.githubTokenLink) {
+      elements.githubTokenLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        chrome.tabs.create({ url: elements.githubTokenLink.getAttribute("href") });
+      });
+    }
+  }
+  
+  // Initialize the options page
+  initOptions();
 });
 

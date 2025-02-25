@@ -1,4 +1,4 @@
-/* global getSyncStorage, setStorage, getStorage, gitHubInjection */
+/* global getSyncStorage, setStorage, getStorage, STORAGE_KEYS */
 
 // Define key selectors as constants for easier maintenance
 const SELECTORS = {
@@ -26,7 +26,7 @@ const ELEMENT_IDS = {
 
 // Configuration constants
 const CONFIG = {
-	CACHE_EXPIRATION: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds (was 24 hours)
+	CACHE_EXPIRATION: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
 	HOVER_DELAY: 100, // milliseconds to wait before hiding panel
 	STAT_PADDING: 3, // number of digits to pad stats to
 };
@@ -66,7 +66,7 @@ function getPathInfo() {
 
 function buildUrl({
 	base,
-	q: { type, filterUser, author, repo, user },
+	q: { type, filterUser, author, repo, user, created },
 	sort,
 	order,
 	per_page,
@@ -77,6 +77,7 @@ function buildUrl({
 	query += `${user ? `+user:${user}` : ""}`;
 	query += `${type ? `+type:${type}` : ""}`;
 	query += `${filterUser ? `+-user:${filterUser}` : ""}`;
+	query += `${created ? `+created:${created}` : ""}`;
 	query += `${order ? `&order=${order}` : ""}`;
 	query += `${per_page ? `&per_page=${per_page}` : ""}`;
 	query += `${sort ? `&sort=${sort}` : ""}`;
@@ -84,14 +85,14 @@ function buildUrl({
 	return query;
 }
 
-function contributorCount({
+async function contributorCount({
 	access_token,
 	contributor,
 	user,
 	repoPath,
 	old = {},
 	type,
-	scope,
+	scope
 }) {
 	let repo = repoPath;
 
@@ -108,43 +109,46 @@ function contributorCount({
 			type,
 			repo,
 			author: contributor,
-			user: user,
+			user: user
 		},
 		sort: "created",
 	});
 
-	return fetch(searchURL, {
-		headers: {
-			Authorization: `token ${access_token}`,
-		},
-	})
-		.then((res) => res.json())
-		.then((json) => {
-			if (json.errors || json.message) {
-				return json;
-			}
-
-			let obj = {
-				lastUpdate: Date.now(),
-			};
-
-			if (type === "pr") {
-				obj.prs = json.total_count;
-			} else if (type === "issue") {
-				obj.issues = json.total_count;
-			}
-
-			if (json.items?.length) {
-				obj[`first${type[0].toUpperCase() + type.slice(1)}Number`] =
-					json.items[0].number;
-			}
-
-			obj = Object.assign(old, obj);
-
-			setStorage(contributor, repoPath, obj);
-
-			return obj;
+	try {
+		const response = await fetch(searchURL, {
+			headers: {
+				Authorization: `token ${access_token}`,
+			},
 		});
+		const json = await response.json();
+
+		if (json.errors || json.message) {
+			return json;
+		}
+
+		let obj = {
+			lastUpdate: Date.now()
+		};
+
+		if (type === "pr") {
+			obj.prs = json.total_count;
+		} else if (type === "issue") {
+			obj.issues = json.total_count;
+		}
+
+		if (json.items?.length) {
+			obj[`first${type[0].toUpperCase() + type.slice(1)}Number`] =
+				json.items[0].number;
+		}
+
+		obj = Object.assign(old, obj);
+
+		setStorage(contributor, repoPath, obj);
+
+		return obj;
+	} catch (error) {
+		console.error(error);
+	}
 }
 
 function formatText(count, firstNumber, currentNum, scope) {
@@ -346,14 +350,25 @@ function setupHoverBehavior() {
 function setupSyncButton({ contributor, repoPath, currentNum, org }) {
 	const $syncButton = document.getElementById(ELEMENT_IDS.SYNC_BUTTON);
 	$syncButton.addEventListener("click", () => {
-		// Clear all stats and fetch fresh data
-		setStorage(contributor, repoPath, {});
-		setStorage(contributor, org, {});
-		setStorage(contributor, "__self", {});
+		// Clear local cache for this contributor
+		clearContributorCache(contributor);
 		
 		// Fetch all scopes
 		fetchAllStats({ contributor, repoPath, currentNum, org });
 	});
+}
+
+// Clear cache for a specific contributor
+function clearContributorCache(contributor) {
+	try {
+		for (const key of Object.keys(localStorage)) {
+			if (key.startsWith('gce-cache-') && key.includes(contributor)) {
+				localStorage.removeItem(key);
+			}
+		}
+	} catch (e) {
+		console.error("Error clearing contributor cache:", e);
+	}
 }
 
 // Check if cache is expired
@@ -457,25 +472,25 @@ function fetchStats({ contributor, repoPath, currentNum, scope, user }) {
 			updateStatsDisplay({ prText, issueText, scope, lastUpdate: storageRes.lastUpdate });
 		} else {
 			// If cache is expired or no data, fetch fresh data
-			getSyncStorage({ access_token: null }).then((res) => {
+			getSyncStorage({ [STORAGE_KEYS.ACCESS_TOKEN]: null }).then((res) => {
 				Promise.all([
 					contributorCount({
 						old: storageRes,
 						user,
-						access_token: res.access_token,
+						access_token: res[STORAGE_KEYS.ACCESS_TOKEN],
 						type: "pr",
 						contributor,
 						repoPath,
-						scope,
+						scope
 					}),
 					contributorCount({
 						old: storageRes,
 						user,
-						access_token: res.access_token,
+						access_token: res[STORAGE_KEYS.ACCESS_TOKEN],
 						type: "issue",
 						contributor,
 						repoPath,
-						scope,
+						scope
 					}),
 				])
 					.then(([prInfo, issueInfo]) => {
@@ -629,9 +644,9 @@ function showToast(message, type = "error") {
 // Main initialization function
 function initializeContributorStats() {
 	if (isPR(location.pathname) || isIssue(location.pathname)) {
-		getSyncStorage({ _showPrivateRepos: null }).then(
-			({ _showPrivateRepos }) => {
-				if (!_showPrivateRepos && isPrivate()) return;
+		getSyncStorage({ [STORAGE_KEYS.SHOW_PRIVATE_REPOS]: null }).then(
+			(result) => {
+				if (!result[STORAGE_KEYS.SHOW_PRIVATE_REPOS] && isPrivate()) return;
 
 				if (getFirstContributor()) {
 					injectInitialUI(getPathInfo());
@@ -643,5 +658,11 @@ function initializeContributorStats() {
 
 // Initialize when DOM is ready
 document.addEventListener("DOMContentLoaded", () => {
-	gitHubInjection(initializeContributorStats);
+	// Check if gitHubInjection is available
+	if (typeof gitHubInjection === 'function') {
+		gitHubInjection(initializeContributorStats);
+	} else {
+		// Fallback to direct initialization
+		initializeContributorStats();
+	}
 });

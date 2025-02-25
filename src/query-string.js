@@ -1,6 +1,14 @@
-// Simplified query string utilities
+/**
+ * Contributors on GitHub - Query String Utilities
+ * Provides utilities for parsing and building URL query strings
+ */
+
 const queryString = {
-  // Parse a query string into an object
+  /**
+   * Parse a query string into an object
+   * @param {string} str - The query string to parse
+   * @returns {Object} - The parsed query parameters
+   */
   parse(str) {
     if (typeof str !== 'string' || !str.trim()) return {};
     
@@ -26,15 +34,17 @@ const queryString = {
     }, {});
   },
   
-  // Convert an object to a query string
+  /**
+   * Convert an object to a query string
+   * @param {Object} obj - The object to stringify
+   * @returns {string} - The resulting query string
+   */
   stringify(obj) {
     if (!obj) return '';
     
-    return Object.keys(obj)
-      .filter(key => obj[key] !== undefined)
-      .map(key => {
-        const value = obj[key];
-        
+    return Object.entries(obj)
+      .filter(([_, value]) => value !== undefined)
+      .map(([key, value]) => {
         if (value === null) return encodeURIComponent(key);
         
         if (Array.isArray(value)) {
@@ -48,7 +58,11 @@ const queryString = {
       .join('&');
   },
   
-  // Extract query string from a URL
+  /**
+   * Extract query string from a URL
+   * @param {string} url - The URL to extract from
+   * @returns {string} - The extracted query string
+   */
   extract(url) {
     const queryIndex = url.indexOf('?');
     return queryIndex >= 0 ? url.slice(queryIndex + 1) : '';
