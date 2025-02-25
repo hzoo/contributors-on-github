@@ -17,14 +17,13 @@ const getCurrentUser = () =>
 		?.slice(1) || "";
 const isPrivate = () =>
 	document.querySelector(SELECTORS.PRIVATE_LABEL)?.innerText === "Private";
-let statsScope = "repo";
 
 // Get the username of the first contributor *in the DOM* of the page
 function getFirstContributor() {
 	return document.querySelector(SELECTORS.FIRST_CONTRIBUTOR)?.innerText;
 }
 
-function getContributorInfo() {
+function getPathInfo() {
 	// "/babel/babel-eslint/pull/1"
 	const pathNameArr = location.pathname.split("/");
 	const org = pathNameArr[1]; // babel
@@ -33,25 +32,12 @@ function getContributorInfo() {
 	const repoPath = `${org}/${repo}`; // babel/babel-eslint
 	const contributor = getFirstContributor();
 
-	const ret = {
+	return {
 		contributor,
 		currentNum,
 		repoPath,
+		org,
 	};
-
-	// global variable
-	if (statsScope === "org") {
-		ret.user = org;
-		ret.repoPath = org;
-	}
-
-	if (statsScope === "account") {
-		ret.repoPath = "__self";
-	}
-
-	injectInitialUI(ret);
-
-	return ret;
 }
 
 function buildUrl({
@@ -81,16 +67,13 @@ function contributorCount({
 	repoPath,
 	old = {},
 	type,
+	scope,
 }) {
 	let repo = repoPath;
 
-	// global variable
-	if (statsScope === "org") {
+	// Handle different scopes
+	if (scope === "org" || scope === "account") {
 		repo = undefined;
-		repoPath = repoPath.split("/")[0];
-	} else if (statsScope === "account") {
-		repo = undefined;
-		repoPath = "__self";
 	}
 
 	const searchURL = buildUrl({
@@ -140,32 +123,16 @@ function contributorCount({
 		});
 }
 
-function appendPRText(currentNum, repoInfo) {
-	const { issues, prs, firstPrNumber, firstIssueNumber } = repoInfo;
-
-	if (prs !== undefined) {
-		let prText = `${prs}`;
-		if (firstPrNumber === +currentNum && statsScope !== "account") {
-			prText = "First PR";
-			if (prs > 1) {
-				prText += ` out of ${prs}`;
-			}
-		}
-		repoInfo.prText = prText;
+function formatText(count, firstNumber, currentNum, scope) {
+	if (count === undefined) return "..";
+	
+	if (firstNumber === currentNum && scope !== "account") {
+		const isFirst = count === 1 ? "First" : "1st";
+		const countText = count > 1 ? ` of ${count}` : "";
+		return `${isFirst}${countText}`;
 	}
-
-	if (issues !== undefined) {
-		let issueText = `${issues}`;
-		if (firstIssueNumber === +currentNum && statsScope !== "account") {
-			issueText = "First Issue";
-			if (issues > 1) {
-				issueText += ` out of ${issues}`;
-			}
-		}
-		repoInfo.issueText = issueText;
-	}
-
-	return repoInfo;
+	
+	return `${count}`;
 }
 
 function issueOrPrLink(type, repoPath, contributor) {
@@ -187,146 +154,356 @@ function issueOrPrLink(type, repoPath, contributor) {
 }
 
 // Use GitHub's current icon styling
-const prIcon = `<svg aria-hidden="true" class="octicon octicon-git-pull-request" height="16" width="16" viewBox="0 0 16 16" version="1.1" role="img"><path d="M1.5 3.25a2.25 2.25 0 1 1 3 2.122v5.256a2.251 2.251 0 1 1-1.5 0V5.372A2.25 2.25 0 0 1 1.5 3.25Zm5.677-.177L9.573.677A.25.25 0 0 1 10 .854V2.5h1A2.5 2.5 0 0 1 13.5 5v5.628a2.251 2.251 0 1 1-1.5 0V5a1 1 0 0 0-1-1h-1v1.646a.25.25 0 0 1-.427.177L7.177 3.427a.25.25 0 0 1 0-.354ZM3.75 2.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Zm0 9.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Zm8.25.75a.75.75 0 1 0 1.5 0 .75.75 0 0 0-1.5 0Z"></path></svg>`;
-const issueIcon = `<svg aria-hidden="true" class="octicon octicon-issue-opened" height="16" width="16" viewBox="0 0 16 16" version="1.1" role="img"><path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"></path><path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"></path></svg>`;
-const syncIcon = `<svg aria-hidden="true" class="octicon octicon-sync" height="16" width="16" viewBox="0 0 16 16" version="1.1" role="img"><path d="M8 2.5a5.487 5.487 0 0 0-4.131 1.869l1.204 1.204A.25.25 0 0 1 4.896 6H1.25A.25.25 0 0 1 1 5.75V2.104a.25.25 0 0 1 .427-.177l1.38 1.38A7.001 7.001 0 0 1 14.95 7.16a.75.75 0 0 1-1.49.178A5.501 5.501 0 0 0 8 2.5ZM1.705 8.005a.75.75 0 0 1 .834.656 5.501 5.501 0 0 0 9.592 2.97l-1.204-1.204a.25.25 0 0 1 .177-.427h3.646a.25.25 0 0 1 .25.25v3.646a.25.25 0 0 1-.427.177l-1.38-1.38A7.001 7.001 0 0 1 1.05 8.84a.75.75 0 0 1 .656-.834Z"></path></svg>`;
-const checkIcon = `<svg aria-hidden="true" class="octicon octicon-check" height="16" width="16" viewBox="0 0 16 16" version="1.1" role="img"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path></svg>`;
+const prIcon = `<svg aria-hidden="true" class="octicon octicon-git-pull-request" height="16" width="16" viewBox="0 0 16 16" version="1.1" role="img" fill="currentColor" style="display: inline-block; user-select: none; vertical-align: text-bottom; overflow: visible;"><path d="M1.5 3.25a2.25 2.25 0 1 1 3 2.122v5.256a2.251 2.251 0 1 1-1.5 0V5.372A2.25 2.25 0 0 1 1.5 3.25Zm5.677-.177L9.573.677A.25.25 0 0 1 10 .854V2.5h1A2.5 2.5 0 0 1 13.5 5v5.628a2.251 2.251 0 1 1-1.5 0V5a1 1 0 0 0-1-1h-1v1.646a.25.25 0 0 1-.427.177L7.177 3.427a.25.25 0 0 1 0-.354ZM3.75 2.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Zm0 9.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Zm8.25.75a.75.75 0 1 0 1.5 0 .75.75 0 0 0-1.5 0Z"></path></svg>`;
+const issueIcon = `<svg aria-hidden="true" class="octicon octicon-issue-opened" height="16" width="16" viewBox="0 0 16 16" version="1.1" role="img" fill="currentColor" style="display: inline-block; user-select: none; vertical-align: text-bottom; overflow: visible;"><path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"></path><path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"></path></svg>`;
+const syncIcon = `<svg aria-hidden="true" class="octicon octicon-sync" height="16" width="16" viewBox="0 0 16 16" version="1.1" role="img" fill="currentColor" style="display: inline-block; user-select: none; vertical-align: text-bottom; overflow: visible;"><path d="M8 2.5a5.487 5.487 0 0 0-4.131 1.869l1.204 1.204A.25.25 0 0 1 4.896 6H1.25A.25.25 0 0 1 1 5.75V2.104a.25.25 0 0 1 .427-.177l1.38 1.38A7.001 7.001 0 0 1 14.95 7.16a.75.75 0 0 1-1.49.178A5.501 5.501 0 0 0 8 2.5ZM1.705 8.005a.75.75 0 0 1 .834.656 5.501 5.501 0 0 0 9.592 2.97l-1.204-1.204a.25.25 0 0 1 .177-.427h3.646a.25.25 0 0 1 .25.25v3.646a.25.25 0 0 1-.427.177l-1.38-1.38A7.001 7.001 0 0 1 1.05 8.84a.75.75 0 0 1 .656-.834Z"></path></svg>`;
 
-function injectInitialUI({ contributor, repoPath }) {
+function injectInitialUI({ contributor, repoPath, currentNum, org }) {
 	const $elem = document.querySelector(SELECTORS.TIMELINE_COMMENT_HEADER);
 	const prId = "gce-num-prs";
 	const issueId = "gce-num-issues";
 
+	// Don't inject if already present
 	if (document.getElementById(`${prId}`)) return;
-
-	// Create dropdown menu similar to GitHub's current style - removed button styling
-	const dropdown = `
-    <details class="details-overlay details-reset position-relative d-inline-block">
-      <summary class="btn-link Link--secondary" aria-haspopup="menu" role="button">
-        <span id="gce-dropdown-text">repo</span>
-        <span class="dropdown-caret"></span>
-      </summary>
-      <div class="dropdown-menu dropdown-menu-sw">
-        <div class="dropdown-header">
-          View options
-        </div>
-        <a class="dropdown-item d-flex flex-items-center selected" id="gce-in-this-repo">
-          ${checkIcon}
-          <span class="ml-2">in this repo</span>
-        </a>
-        <a class="dropdown-item d-flex flex-items-center" id="gce-in-this-org">
-          <span class="ml-4">in this org</span>
-        </a>
-        <a class="dropdown-item d-flex flex-items-center" id="gce-in-this-account">
-          <span class="ml-4">in this account</span>
-        </a>
-        <div class="dropdown-divider"></div>
-        <a id="gce-sync-button" class="dropdown-item d-flex flex-items-center">
-          ${syncIcon}
-          <span class="ml-2">Refresh stats</span>
-        </a>
-        <div class="dropdown-divider"></div>
-        <div class="px-3 py-1 color-fg-subtle f6 text-center" id="gce-update-time"></div>
-      </div>
-    </details>`;
 
 	// Create the main container with GitHub utility classes
 	$elem.insertAdjacentHTML(
 		"beforebegin",
-		`<div class="d-flex flex-items-center">
-      <a href="${issueOrPrLink("pr", repoPath, contributor)}" 
-         id="${prId}" 
-         class="d-flex flex-items-center mr-2 Link--secondary no-underline" 
-         aria-label="Pull requests by this user">
-         ${prIcon}
-         <span class="ml-1" id="gce-pr-count">..</span>
-      </a>
-      <a href="${issueOrPrLink("issue", repoPath, contributor)}" 
-         id="${issueId}" 
-         class="d-flex flex-items-center mr-2 Link--secondary no-underline" 
-         aria-label="Issues by this user">
-         ${issueIcon}
-         <span class="ml-1" id="gce-issue-count">..</span>
-      </a>
-      ${dropdown}
+		`<div class="d-flex flex-items-center position-relative" id="gce-container">
+      <div class="d-flex flex-items-center position-relative">
+        <a href="${issueOrPrLink("pr", repoPath, contributor)}" 
+           id="${prId}" 
+           class="Link--secondary color-fg-muted d-inline-flex flex-items-center no-underline mr-3" 
+           aria-label="Pull requests by this user">
+           ${prIcon}<span class="ml-1 Text-sc-17v1xeu-0" style="font-size: 12px; line-height: 1.5;">${"..."}</span>
+        </a>
+        <a href="${issueOrPrLink("issue", repoPath, contributor)}" 
+           id="${issueId}" 
+           class="Link--secondary color-fg-muted d-inline-flex flex-items-center no-underline" 
+           aria-label="Issues by this user">
+           ${issueIcon}<span class="ml-1 Text-sc-17v1xeu-0" style="font-size: 12px; line-height: 1.5;">${"..."}</span>
+        </a>
+        
+        <!-- Hover panel with all scopes -->
+        <div id="gce-hover-panel" class="position-absolute Box color-shadow-medium rounded-2 p-3" style="z-index: 100; top: 100%; left: -125px; min-width: 280px; margin-top: 4px;">
+          <!-- Repo stats -->
+          <div class="d-flex flex-items-center mb-2 py-1">
+            <div class="gce-scope-label">
+              <span class="f6 color-fg-muted">In this repo:</span>
+            </div>
+            <div class="d-flex flex-items-center ml-auto">
+              <div class="d-inline-flex flex-items-center mr-3">
+                ${prIcon}<span class="ml-1 Text-sc-17v1xeu-0 gce-stat-number" id="gce-repo-pr-count">...</span>
+              </div>
+              <div class="d-inline-flex flex-items-center">
+                ${issueIcon}<span class="ml-1 Text-sc-17v1xeu-0 gce-stat-number" id="gce-repo-issue-count">...</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Org stats -->
+          <div class="d-flex flex-items-center mb-2 py-1">
+            <div class="gce-scope-label">
+              <span class="f6 color-fg-muted">In this org:</span>
+            </div>
+            <div class="d-flex flex-items-center ml-auto">
+              <div class="d-inline-flex flex-items-center mr-3">
+                ${prIcon}<span class="ml-1 Text-sc-17v1xeu-0 gce-stat-number" id="gce-org-pr-count">...</span>
+              </div>
+              <div class="d-inline-flex flex-items-center">
+                ${issueIcon}<span class="ml-1 Text-sc-17v1xeu-0 gce-stat-number" id="gce-org-issue-count">...</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Account stats -->
+          <div class="d-flex flex-items-center mb-2 py-1">
+            <div class="gce-scope-label">
+              <span class="f6 color-fg-muted">In this account:</span>
+            </div>
+            <div class="d-flex flex-items-center ml-auto">
+              <div class="d-inline-flex flex-items-center mr-3">
+                ${prIcon}<span class="ml-1 Text-sc-17v1xeu-0 gce-stat-number" id="gce-account-pr-count">...</span>
+              </div>
+              <div class="d-inline-flex flex-items-center">
+                ${issueIcon}<span class="ml-1 Text-sc-17v1xeu-0 gce-stat-number" id="gce-account-issue-count">...</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="border-top my-2"></div>
+          <div class="d-flex flex-items-center">
+            <button id="gce-sync-button" class="btn-link Link--secondary d-flex flex-items-center py-1 color-fg-muted">
+              ${syncIcon}
+              <span class="ml-2 f6">refresh</span>
+            </button>
+            <span class="color-fg-subtle f6 ml-auto" id="gce-update-time"></span>
+          </div>
+        </div>
+      </div>
     </div>`,
 	);
 
-	const $syncButton = document.getElementById("gce-sync-button");
-	$syncButton.addEventListener("click", () => {
-		setStorage(contributor, repoPath, {});
-		update(getContributorInfo());
+	// Add responsive styles and hover behavior
+	const styleEl = document.createElement('style');
+	styleEl.id = 'gce-responsive-styles';
+	styleEl.textContent = `
+		#gce-container {
+			margin-right: 8px;
+			align-items: center;
+		}
+		#gce-container svg {
+			vertical-align: text-bottom;
+		}
+		#gce-hover-panel {
+			box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+			border: 1px solid var(--color-border-default);
+			background-color: var(--color-canvas-default);
+		}
+		#gce-hover-panel .Text-sc-17v1xeu-0 {
+			font-size: 12px;
+			line-height: 1.5;
+		}
+		.gce-scope-label {
+			width: 110px;
+			flex-shrink: 0;
+		}
+		.gce-stat-number {
+			min-width: 40px;
+			display: inline-block;
+			text-align: right;
+			font-variant-numeric: tabular-nums;
+		}
+		@media (max-width: 768px) {
+			.timeline-comment-header {
+				flex-wrap: wrap;
+			}
+		}
+	`;
+	document.head.appendChild(styleEl);
+
+	// Set up hover behavior
+	const $container = document.getElementById("gce-container");
+	const $hoverPanel = document.getElementById("gce-hover-panel");
+	const $statsContainer = $container.querySelector(".d-flex.flex-items-center");
+	
+	let isPanelVisible = false;
+	let isHoveringPanel = false;
+	
+	function showPanel() {
+		$hoverPanel.style.display = "block";
+		isPanelVisible = true;
+	}
+	
+	function hidePanel() {
+		if (!isHoveringPanel) {
+			$hoverPanel.style.display = "none";
+			isPanelVisible = false;
+		}
+	}
+	
+	$statsContainer.addEventListener("mouseenter", showPanel);
+	$statsContainer.addEventListener("mouseleave", () => {
+		setTimeout(hidePanel, 100);
+	});
+	
+	$hoverPanel.addEventListener("mouseenter", () => {
+		isHoveringPanel = true;
+	});
+	
+	$hoverPanel.addEventListener("mouseleave", () => {
+		isHoveringPanel = false;
+		hidePanel();
+	});
+	
+	// Close panel when clicking outside
+	document.addEventListener("click", (e) => {
+		if (isPanelVisible && !$container.contains(e.target)) {
+			hidePanel();
+		}
 	});
 
-	const $inThisOrg = document.getElementById("gce-in-this-org");
-	const $inThisRepo = document.getElementById("gce-in-this-repo");
-	const $inThisAccount = document.getElementById("gce-in-this-account");
-	const $dropdownText = document.getElementById("gce-dropdown-text");
+	const $syncButton = document.getElementById("gce-sync-button");
+	$syncButton.addEventListener("click", () => {
+		// Clear all stats and fetch fresh data
+		setStorage(contributor, repoPath, {});
+		setStorage(contributor, org, {});
+		setStorage(contributor, "__self", {});
+		
+		// Fetch all scopes
+		fetchAllStats({ contributor, repoPath, currentNum, org });
+	});
 
-	// Simplified event handlers with helper function
-	function updateScope(scope, scopeText) {
-		return () => {
-			// Update selected state
-			$inThisRepo.classList.toggle("selected", scope === "repo");
-			$inThisOrg.classList.toggle("selected", scope === "org");
-			$inThisAccount.classList.toggle("selected", scope === "account");
-
-			// Update dropdown text
-			$dropdownText.textContent = scopeText;
-
-			// Update icons
-			$inThisRepo.innerHTML =
-				scope === "repo"
-					? `${checkIcon}<span class="ml-2">in this repo</span>`
-					: `<span class="ml-4">in this repo</span>`;
-
-			$inThisOrg.innerHTML =
-				scope === "org"
-					? `${checkIcon}<span class="ml-2">in this org</span>`
-					: `<span class="ml-4">in this org</span>`;
-
-			$inThisAccount.innerHTML =
-				scope === "account"
-					? `${checkIcon}<span class="ml-2">in this account</span>`
-					: `<span class="ml-4">in this account</span>`;
-
-			// Update links
-			let href;
-			if (scope === "org") {
-				href = repoPath.split("/")[0];
-			} else if (scope === "account") {
-				href = "__self";
-			} else {
-				href = repoPath;
-			}
-
-			document
-				.getElementById(prId)
-				.setAttribute("href", issueOrPrLink("pr", href, contributor));
-			document
-				.getElementById(issueId)
-				.setAttribute("href", issueOrPrLink("issue", href, contributor));
-
-			// Update global scope and refresh data
-			statsScope = scope;
-			update(getContributorInfo());
-		};
-	}
-
-	$inThisRepo.addEventListener("click", updateScope("repo", "repo"));
-	$inThisOrg.addEventListener("click", updateScope("org", "org"));
-	$inThisAccount.addEventListener("click", updateScope("account", "account"));
+	// Initial fetch of all stats
+	fetchAllStats({ contributor, repoPath, currentNum, org });
 }
 
-function updateTextNodes({ prText, issueText, lastUpdate }) {
-	const prNode = document.getElementById("gce-pr-count");
-	if (prNode) {
-		prNode.textContent = prText;
-	}
+// Fetch stats for all scopes (repo, org, account)
+function fetchAllStats({ contributor, repoPath, currentNum, org }) {
+	// Fetch repo stats
+	fetchStats({ contributor, repoPath, currentNum, scope: "repo" });
+	
+	// Fetch org stats
+	fetchStats({ contributor, repoPath: org, currentNum, scope: "org", user: org });
+	
+	// Fetch account stats
+	fetchStats({ contributor, repoPath: "__self", currentNum, scope: "account" });
+}
 
-	const issueNode = document.getElementById("gce-issue-count");
-	if (issueNode) {
-		issueNode.textContent = issueText;
+// Fetch stats for a specific scope
+function fetchStats({ contributor, repoPath, currentNum, scope, user }) {
+	getStorage(contributor, repoPath).then((storage) => {
+		const storageKey = `${contributor}|${user || repoPath}`;
+		const storageRes = storage[storageKey] || {};
+
+		if (storageRes.prs !== undefined || storageRes.issues !== undefined) {
+			// Format the text for display
+			const prText = formatText(storageRes.prs, storageRes.firstPrNumber, currentNum, scope);
+			const issueText = formatText(storageRes.issues, storageRes.firstIssueNumber, currentNum, scope);
+			
+			updateStatsDisplay({ prText, issueText, scope, lastUpdate: storageRes.lastUpdate });
+		} else {
+			getSyncStorage({ access_token: null }).then((res) => {
+				Promise.all([
+					contributorCount({
+						old: storageRes,
+						user,
+						access_token: res.access_token,
+						type: "pr",
+						contributor,
+						repoPath,
+						scope,
+					}),
+					contributorCount({
+						old: storageRes,
+						user,
+						access_token: res.access_token,
+						type: "issue",
+						contributor,
+						repoPath,
+						scope,
+					}),
+				])
+					.then(([prInfo, issueInfo]) => {
+						const repoInfo = Object.assign(prInfo, issueInfo);
+
+						if (repoInfo.errors) {
+							const errorMessage = repoInfo.errors[0].message;
+							updateStatsDisplay({ prText: "Error", issueText: "Error", scope });
+							showToast(`API Error: ${errorMessage}`);
+							return;
+						}
+
+						if (repoInfo.message) {
+							// API rate limit exceeded for hzoo.
+							if (
+								repoInfo.message.indexOf(
+									`API rate limit exceeded for ${getCurrentUser()}`,
+								) >= 0
+							) {
+								updateStatsDisplay({
+									prText: "Rate limited",
+									issueText: "Rate limited",
+									scope,
+								});
+								showToast(
+									"API rate limit exceeded. Try again later or add an access token in the [Contributors on Github] settings.",
+									"warning",
+								);
+								return;
+							}
+
+							// Bad credentials error
+							if (repoInfo.message === "Bad credentials") {
+								updateStatsDisplay({
+									prText: "Auth error",
+									issueText: "Auth error",
+									scope,
+								});
+								showToast(
+									"Your GitHub token is invalid or has expired. Please update it in the [Contributors on Github] options.",
+									"warning",
+								);
+								return;
+							}
+
+							// API rate limit exceeded for x.x.x.x.
+							if (repoInfo.message.indexOf("the good news") >= 0) {
+								updateStatsDisplay({
+									prText: "Auth needed",
+									issueText: "Auth needed",
+									scope,
+								});
+								showToast(
+									"GitHub API rate limit reached. Please add an access token in the [Contributors on Github] settings.",
+									"warning",
+								);
+								return;
+							}
+
+							// Generic error
+							updateStatsDisplay({ prText: "Error", issueText: "Error", scope });
+							showToast(`GitHub API Error: ${repoInfo.message}`);
+							return;
+						}
+
+						// Format the text for display
+						const prText = formatText(repoInfo.prs, repoInfo.firstPrNumber, currentNum, scope);
+						const issueText = formatText(repoInfo.issues, repoInfo.firstIssueNumber, currentNum, scope);
+						
+						updateStatsDisplay({ 
+							prText, 
+							issueText, 
+							scope, 
+							lastUpdate: repoInfo.lastUpdate 
+						});
+					})
+					.catch((error) => {
+						console.error("GitHub Contributors Extension error:", error);
+						updateStatsDisplay({ prText: "Error", issueText: "Error", scope });
+						showToast(
+							"Failed to fetch contributor data. Check console for details.",
+						);
+					});
+			});
+		}
+	});
+}
+
+function updateStatsDisplay({ prText, issueText, scope, lastUpdate }) {
+	// Update the main display (always shows repo stats)
+	if (scope === "repo") {
+		const prNode = document.getElementById("gce-num-prs").querySelector("span");
+		if (prNode) {
+			prNode.textContent = prText;
+		}
+
+		const issueNode = document.getElementById("gce-num-issues").querySelector("span");
+		if (issueNode) {
+			issueNode.textContent = issueText;
+		}
+	}
+	
+	// Pad numbers for consistent width (up to 9999)
+	function padNumber(text) {
+		// Only pad if it's a number
+		const num = Number(text);
+		if (!Number.isNaN(num) && text !== "...") {
+			// Right-align with space padding
+			return text.toString().padStart(4, ' ');
+		}
+		return text;
+	}
+	
+	// Update the hover panel stats based on scope
+	const prScopeNode = document.getElementById(`gce-${scope}-pr-count`);
+	if (prScopeNode) {
+		prScopeNode.textContent = padNumber(prText);
+	}
+	
+	const issueScopeNode = document.getElementById(`gce-${scope}-issue-count`);
+	if (issueScopeNode) {
+		issueScopeNode.textContent = padNumber(issueText);
 	}
 
 	const updateTime = document.getElementById("gce-update-time");
@@ -348,7 +525,7 @@ function updateTextNodes({ prText, issueText, lastUpdate }) {
 			timeText = `${diffDays}d`;
 		}
 
-		updateTime.textContent = `Updated ${timeText} ago`;
+		updateTime.textContent = `${timeText} ago`;
 	}
 }
 
@@ -369,7 +546,7 @@ function showToast(message, type = "error") {
 	toast.style.bottom = "20px";
 	toast.style.right = "20px";
 	toast.style.padding = "12px 16px";
-	toast.style.borderRadius = "4px";
+	toast.style.borderRadius = "6px";
 	toast.style.zIndex = "100";
 	toast.style.maxWidth = "300px";
 	toast.style.boxShadow = "0 3px 6px rgba(0, 0, 0, 0.16)";
@@ -406,125 +583,22 @@ function showToast(message, type = "error") {
 	}, 5000);
 }
 
-function update({ contributor, repoPath, currentNum, user }) {
-	getStorage(contributor, repoPath).then((storage) => {
-		let path = repoPath;
-		if (user) {
-			path = user;
-		} else if (statsScope === "account") {
-			path = "__self";
-		}
+// Main initialization function
+function initializeContributorStats() {
+	if (isPR(location.pathname) || isIssue(location.pathname)) {
+		getSyncStorage({ _showPrivateRepos: null }).then(
+			({ _showPrivateRepos }) => {
+				if (!_showPrivateRepos && isPrivate()) return;
 
-		const storageRes = storage[`${contributor}|${path}`] || {};
-
-		if (storageRes.prs || storageRes.issues) {
-			updateTextNodes(appendPRText(currentNum, storageRes));
-		} else {
-			getSyncStorage({ access_token: null }).then((res) => {
-				Promise.all([
-					contributorCount({
-						old: storageRes,
-						user,
-						access_token: res.access_token,
-						type: "pr",
-						contributor,
-						repoPath,
-					}),
-					contributorCount({
-						old: storageRes,
-						user,
-						access_token: res.access_token,
-						type: "issue",
-						contributor,
-						repoPath,
-					}),
-				])
-					.then(([prInfo, issueInfo]) => {
-						const repoInfo = Object.assign(prInfo, issueInfo);
-
-						if (repoInfo.errors) {
-							const errorMessage = repoInfo.errors[0].message;
-							updateTextNodes({ prText: "Error", issueText: "Error" });
-							showToast(`API Error: ${errorMessage}`);
-							return;
-						}
-
-						if (repoInfo.message) {
-							// API rate limit exceeded for hzoo.
-							if (
-								repoInfo.message.indexOf(
-									`API rate limit exceeded for ${getCurrentUser()}`,
-								) >= 0
-							) {
-								updateTextNodes({
-									prText: "Rate limited",
-									issueText: "Rate limited",
-								});
-								showToast(
-									"API rate limit exceeded. Try again later or add an access token in the [Contributors on Github] settings.",
-									"warning",
-								);
-								return;
-							}
-
-							// Bad credentials error
-							if (repoInfo.message === "Bad credentials") {
-								updateTextNodes({
-									prText: "Auth error",
-									issueText: "Auth error",
-								});
-								showToast(
-									"Your GitHub token is invalid or has expired. Please update it in the [Contributors on Github] options.",
-									"warning",
-								);
-								return;
-							}
-
-							// API rate limit exceeded for x.x.x.x.
-							if (repoInfo.message.indexOf("the good news") >= 0) {
-								updateTextNodes({
-									prText: "Auth needed",
-									issueText: "Auth needed",
-								});
-								showToast(
-									"GitHub API rate limit reached. Please add an access token in the [Contributors on Github] settings.",
-									"warning",
-								);
-								return;
-							}
-
-							// Generic error
-							updateTextNodes({ prText: "Error", issueText: "Error" });
-							showToast(`GitHub API Error: ${repoInfo.message}`);
-							return;
-						}
-
-						updateTextNodes(appendPRText(currentNum, repoInfo));
-					})
-					.catch((error) => {
-						console.error("GitHub Contributors Extension error:", error);
-						updateTextNodes({ prText: "Error", issueText: "Error" });
-						showToast(
-							"Failed to fetch contributor data. Check console for details.",
-						);
-					});
-			});
-		}
-	});
+				if (getFirstContributor()) {
+					injectInitialUI(getPathInfo());
+				}
+			},
+		);
+	}
 }
 
+// Initialize when DOM is ready
 document.addEventListener("DOMContentLoaded", () => {
-	gitHubInjection(() => {
-		if (isPR(location.pathname) || isIssue(location.pathname)) {
-			getSyncStorage({ _showPrivateRepos: null }).then(
-				({ _showPrivateRepos }) => {
-					if (!_showPrivateRepos && isPrivate()) return;
-
-					if (getFirstContributor()) {
-						update(getContributorInfo());
-					}
-				},
-			);
-		}
-	});
+	gitHubInjection(initializeContributorStats);
 });
