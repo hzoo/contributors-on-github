@@ -4,15 +4,22 @@
 
 # Contributors on Github
 
-The original idea was to show if it's a contributors first PR on the pull request page such as https://github.com/babel/babel/pull/3283.
+A browser extension that shows contributor information on GitHub pull requests, including whether it's a user's first contribution.
 
 [![](firstpr.gif)](https://github.com/babel/babel/pull/3283)
 
 Much thanks to @Pocket-titan and @djrosenbaum for working on the logo 🖼!
 
----
+## Features
 
-## Install
+- [x] Shows the number of Issues/PRs a user has made to a specific repository, org, account
+- [x] ~~Displays "First-time contributor" badge for new contributors~~ GitHub does this now!
+- Works on any GitHub page with pull requests or issues
+- Data is cached for better performance
+
+## Installation
+
+### Browser Extension Stores
 
 [link-chrome]: https://chrome.google.com/webstore/detail/github-contributor-stats/cjbacdldhllelehomkmlniifaojgaeph?hl=en 'Version published on Chrome Web Store'
 [link-firefox]: https://addons.mozilla.org/en-US/firefox/addon/contributor-on-github/ 'Version published on Mozilla Add-ons'
@@ -21,60 +28,55 @@ Much thanks to @Pocket-titan and @djrosenbaum for working on the logo 🖼!
 
 [<img src="https://raw.githubusercontent.com/alrra/browser-logos/main/src/firefox/firefox_128x128.png" width="48" alt="Firefox" valign="middle">][link-firefox] [<img valign="middle" src="https://img.shields.io/amo/v/contributor-on-github.svg?label=%20">][link-firefox]
 
----
+### Local Installation
+
+#### Chrome/Edge/Brave/Opera
+
+1. Clone or [download](https://github.com/hzoo/contributors-on-github/archive/refs/heads/master.zip) this repository
+2. Go to `chrome://extensions/`
+3. Enable "Developer mode" in the top-right corner
+4. Click "Load unpacked"
+5. Select the `src` folder from this repository
+
+#### Firefox
+
+1. Clone or download this repository
+2. Go to `about:debugging#/runtime/this-firefox`
+3. Click "Load Temporary Add-on…"
+4. Select the `manifest.json` file in the `src` folder
 
 ## Usage
 
-You can start from any page on `github.com` and when you navigate to a specific issue/pull request (such as https://github.com/babel/babel/pull/3331), it will inject information inline (like the # of PRs a user has made to that specific repo).
+Once installed, the extension works automatically when you visit GitHub pull requests or issues. It injects contributor information inline, showing the number of PRs a user has made to that specific repository.
 
 [![](injected-content.png)](https://github.com/jscs-dev/node-jscs/pull/2180)
 
-You can click on `🔄` to update the data if it has changed (it is cached in chrome storage).
+You can click on `🔄` to refresh the data if needed (data is cached in browser storage).
 
-If necessary, you may want to create or get a "access token" that uses the `public_repo` permission if you want to use a 30/min rate limit instead of 10/min.
+### GitHub API Rate Limits
 
-> If you want to use this on private repos then you'll need to add the `repo` permission instead. I would recommend installing locally for this.
+- Without authentication: 60 requests per hour
+- With authentication token: 5,000 requests per hour
+
+To use higher rate limits, you can add a GitHub personal access token in the extension options:
+
+1. Create a token at [GitHub Settings > Developer settings > Personal access tokens](https://github.com/settings/tokens)
+2. For public repositories: Select the `public_repo` permission
+3. For private repositories: Select the `repo` permission
+4. Copy the token and paste it in the extension options
 
 <img src="options.png" alt="options" height="300px">
 
----
-
 ## Permissions
 
-- "https://github.com/*/*": to be able to inject data into github
-  - The [content script](src/content.js) was matching `"https://github.com/*/*/pull/*` which is correct, but if you start from the hompage, then the script won't ever be injected since github is using pushState to change urls. Now it will match `https://github.com` and then check for the specific url.
-- "https://api.github.com/*": to fetch issue/pr data
-- `"storage"`, to store access token, cache user PR data.
- 
----
+- `github.com/*/*`: Allows the extension to inject data into GitHub pages
+- `api.github.com/*`: Needed to fetch issue/PR data from GitHub's API
+- `storage`: Stores your access token and caches user PR data
 
-## Local Install (Chrome)
-
-- Download the zip, and unzip it
-
-<img src="load-extension.png" alt="local install instructions" height="150px">
-
-- Go to [`chrome://extensions/`](chrome://extensions/)
-- Click on `Load unpacked extension...`
-- Select the `src` folder of the unzipped folder you downloaded
-
-Now try it out!
-
-## Local Install (Firefox)
-
-- Go to [`about:debugging#/runtime/this-firefox`](about:debugging#/runtime/this-firefox)
-- Click on `Load Temporary Add-on…`
-- Select the `manifest.json` file in the `src` folder you downloaded
-- You're done! It should also show up in `about:addons`
-
----
-
-## Related
+## Related Projects
 
 - [Awesome browser extensions for GitHub](https://github.com/stefanbuck/awesome-browser-extensions-for-github)
-- [Refined GitHub](https://github.com/sindresorhus/refined-github/) - OG github extension
-
----
+- [Refined GitHub](https://github.com/sindresorhus/refined-github/)
 
 ## License
 
