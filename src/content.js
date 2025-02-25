@@ -24,6 +24,13 @@ const ELEMENT_IDS = {
 	UPDATE_TIME: "gce-update-time",
 };
 
+// Configuration constants
+const CONFIG = {
+	CACHE_EXPIRATION: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds (was 24 hours)
+	HOVER_DELAY: 100, // milliseconds to wait before hiding panel
+	STAT_PADDING: 3, // number of digits to pad stats to
+};
+
 // Path and user detection helpers
 const isPR = (path) => /^\/[^/]+\/[^/]+\/pull\/\d+/.test(path);
 const isIssue = (path) => /^\/[^/]+\/[^/]+\/issues\/\d+/.test(path);
@@ -170,53 +177,31 @@ function issueOrPrLink(type, repoPath, contributor) {
 	return `https://github.com/${end}+user:${repoPath}`;
 }
 
-function createHoverPanelHTML({ contributor, repoPath }) {
+function createStatRow(scope, label, contributor, repoPath) {
+	return `
+    <div class="d-flex flex-items-center py-1">
+      <div class="gce-scope-label">
+        <span class="f6 color-fg-muted">${label}</span>
+      </div>
+      <div class="d-flex flex-items-center ml-auto">
+        <div class="d-inline-flex flex-items-center mr-2">
+          ${ICONS.PR}<a href="${issueOrPrLink("pr", scope === "repo" ? repoPath : scope === "org" ? repoPath : "__self", contributor)}" class="ml-1 Text-sc-17v1xeu-0 gce-stat-number Link--secondary" id="gce-${scope}-pr-count">...</a>
+        </div>
+        <div class="d-inline-flex flex-items-center">
+          ${ICONS.ISSUE}<a href="${issueOrPrLink("issue", scope === "repo" ? repoPath : scope === "org" ? repoPath : "__self", contributor)}" class="ml-1 Text-sc-17v1xeu-0 gce-stat-number Link--secondary" id="gce-${scope}-issue-count">...</a>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function createHoverPanelHTML({ contributor, repoPath, org }) {
 	return `
     <div id="${ELEMENT_IDS.HOVER_PANEL}" class="position-absolute Box color-shadow-medium rounded-2 p-2" style="display: none; z-index: 100; top: 100%; left: -146px; min-width: 250px; margin-top: 4px;">
-      <!-- Repo stats -->
-      <div class="d-flex flex-items-center py-1">
-        <div class="gce-scope-label">
-          <span class="f6 color-fg-muted">In this repo:</span>
-        </div>
-        <div class="d-flex flex-items-center ml-auto">
-          <div class="d-inline-flex flex-items-center mr-2">
-            ${ICONS.PR}<span class="ml-1 Text-sc-17v1xeu-0 gce-stat-number" id="gce-repo-pr-count">...</span>
-          </div>
-          <div class="d-inline-flex flex-items-center">
-            ${ICONS.ISSUE}<span class="ml-1 Text-sc-17v1xeu-0 gce-stat-number" id="gce-repo-issue-count">...</span>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Org stats -->
-      <div class="d-flex flex-items-center py-1">
-        <div class="gce-scope-label">
-          <span class="f6 color-fg-muted">In this org:</span>
-        </div>
-        <div class="d-flex flex-items-center ml-auto">
-          <div class="d-inline-flex flex-items-center mr-2">
-            ${ICONS.PR}<span class="ml-1 Text-sc-17v1xeu-0 gce-stat-number" id="gce-org-pr-count">...</span>
-          </div>
-          <div class="d-inline-flex flex-items-center">
-            ${ICONS.ISSUE}<span class="ml-1 Text-sc-17v1xeu-0 gce-stat-number" id="gce-org-issue-count">...</span>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Account stats -->
-      <div class="d-flex flex-items-center py-1">
-        <div class="gce-scope-label">
-          <span class="f6 color-fg-muted">In this account:</span>
-        </div>
-        <div class="d-flex flex-items-center ml-auto">
-          <div class="d-inline-flex flex-items-center mr-2">
-            ${ICONS.PR}<span class="ml-1 Text-sc-17v1xeu-0 gce-stat-number" id="gce-account-pr-count">...</span>
-          </div>
-          <div class="d-inline-flex flex-items-center">
-            ${ICONS.ISSUE}<span class="ml-1 Text-sc-17v1xeu-0 gce-stat-number" id="gce-account-issue-count">...</span>
-          </div>
-        </div>
-      </div>
+      <!-- Stats rows -->
+      ${createStatRow("repo", "In this repo:", contributor, repoPath)}
+      ${createStatRow("org", "In this org:", contributor, org)}
+      ${createStatRow("account", "In this account:", contributor, "__self")}
       
       <div class="border-top mt-1 mb-1"></div>
       <div class="d-flex flex-items-center">
@@ -255,10 +240,15 @@ function injectStyles() {
 			flex-shrink: 0;
 		}
 		.gce-stat-number {
-			min-width: 24px;
+			min-width: 30px;
 			display: inline-block;
 			text-align: right;
 			font-variant-numeric: tabular-nums;
+			text-decoration: none;
+		}
+		.gce-stat-number:hover {
+			text-decoration: underline;
+			color: var(--color-accent-fg);
 		}
 		#${ELEMENT_IDS.SYNC_BUTTON} {
 			padding: 2px 0;
@@ -296,7 +286,7 @@ function injectInitialUI({ contributor, repoPath, currentNum, org }) {
            ${ICONS.ISSUE}<span class="ml-1 Text-sc-17v1xeu-0" style="font-size: 12px; line-height: 1.5;">${"..."}</span>
         </a>
         
-        ${createHoverPanelHTML({ contributor, repoPath })}
+        ${createHoverPanelHTML({ contributor, repoPath, org })}
       </div>
     </div>`,
 	);
@@ -332,7 +322,7 @@ function setupHoverBehavior() {
 	
 	$statsContainer.addEventListener("mouseenter", showPanel);
 	$statsContainer.addEventListener("mouseleave", () => {
-		setTimeout(hidePanel, 100);
+		setTimeout(hidePanel, CONFIG.HOVER_DELAY);
 	});
 	
 	$hoverPanel.addEventListener("mouseenter", () => {
@@ -364,6 +354,14 @@ function setupSyncButton({ contributor, repoPath, currentNum, org }) {
 		// Fetch all scopes
 		fetchAllStats({ contributor, repoPath, currentNum, org });
 	});
+}
+
+// Check if cache is expired
+function isCacheExpired(lastUpdate) {
+	if (!lastUpdate) return true;
+	
+	const now = Date.now();
+	return now - lastUpdate > CONFIG.CACHE_EXPIRATION;
 }
 
 // Fetch stats for all scopes (repo, org, account)
@@ -448,14 +446,17 @@ function fetchStats({ contributor, repoPath, currentNum, scope, user }) {
 	getStorage(contributor, repoPath).then((storage) => {
 		const storageKey = `${contributor}|${user || repoPath}`;
 		const storageRes = storage[storageKey] || {};
-
-		if (storageRes.prs !== undefined || storageRes.issues !== undefined) {
+		
+		// Check if we have valid data that's not expired
+		if ((storageRes.prs !== undefined || storageRes.issues !== undefined) && 
+			!isCacheExpired(storageRes.lastUpdate)) {
 			// Format the text for display
 			const prText = formatText(storageRes.prs, storageRes.firstPrNumber, currentNum, scope);
 			const issueText = formatText(storageRes.issues, storageRes.firstIssueNumber, currentNum, scope);
 			
 			updateStatsDisplay({ prText, issueText, scope, lastUpdate: storageRes.lastUpdate });
 		} else {
+			// If cache is expired or no data, fetch fresh data
 			getSyncStorage({ access_token: null }).then((res) => {
 				Promise.all([
 					contributorCount({
@@ -512,8 +513,8 @@ function padNumber(text) {
 	// Only pad if it's a number
 	const num = Number(text);
 	if (!Number.isNaN(num) && text !== "...") {
-		// Right-align with space padding (only pad to 3 digits for compactness)
-		return text.toString().padStart(3, ' ');
+		// Right-align with space padding
+		return text.toString().padStart(CONFIG.STAT_PADDING, ' ');
 	}
 	return text;
 }
