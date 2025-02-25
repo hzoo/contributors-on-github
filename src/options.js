@@ -1,25 +1,11 @@
-/* global getSyncStorage, setSyncStorage, getTokenFromOauth */
+/* global getSyncStorage, setSyncStorage, getTokenFromOauth, showFeedback */
 
 document.addEventListener("DOMContentLoaded", async () => {
   const accessTokenInput = document.getElementById("token-input");
   const oauthLink = document.getElementById("use-oauth");
   const clearCacheLink = document.getElementById("clear-cache");
   const showPrivateReposInput = document.getElementById("show-private-repos");
-  const feedback = document.querySelector("#feedback");
-
-  // Show feedback messages
-  function showFeedback(message) {
-    if (feedback) {
-      feedback.textContent = message;
-      feedback.style.display = "block";
-      
-      // Auto-hide after 3 seconds
-      setTimeout(() => {
-        feedback.style.display = "none";
-      }, 3000);
-    }
-  }
-
+  
   // Load saved settings
   try {
     const { access_token, _showPrivateRepos } = await getSyncStorage({ 
@@ -44,19 +30,32 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   // OAuth button click handler
-  oauthLink.addEventListener("click", () => {
-    getTokenFromOauth();
-  });
+  oauthLink.addEventListener("click", getTokenFromOauth);
 
   // Clear cache button click handler
   clearCacheLink.addEventListener("click", async () => {
     try {
-      const temp = accessTokenInput.value;
+      // Save token before clearing
+      const token = accessTokenInput.value;
+      
+      // Clear both sync storage and local cache
       await new Promise(resolve => chrome.storage.sync.clear(resolve));
-      await setSyncStorage({ "access_token": temp });
-      showFeedback("Storage Cleared");
+      
+      // Clear local storage cache
+      for (const key of Object.keys(localStorage)) {
+        if (key.startsWith('gce-cache-')) {
+          localStorage.removeItem(key);
+        }
+      }
+      
+      // Restore token if it existed
+      if (token) {
+        await setSyncStorage({ "access_token": token });
+      }
+      
+      showFeedback("Cache cleared successfully");
     } catch (error) {
-      showFeedback(`Error clearing storage: ${error.message}`);
+      showFeedback(`Error clearing cache: ${error.message}`);
     }
   });
 

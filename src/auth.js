@@ -6,103 +6,105 @@ const GITHUB_AUTH_URL = "https://github.com/login/oauth/authorize";
 const GITHUB_TOKEN_URL = "https://github.com/login/oauth/access_token";
 const REDIRECT_URI = chrome.identity.getRedirectURL("provider_cb");
 
-function getAuthUrl(base, callbackUrl, scope) {
-  const params = {
-    client_id: CLIENT_ID,
-    client_secret: CLIENT_SECRET,
-    redirect_uri: callbackUrl,
-    scope,
-  };
-
-  return `${base}?${queryString.stringify(params)}`;
-}
-
-async function getTokenFromCode(code) {
+// Simplified auth flow with better error handling
+async function getTokenFromOauth() {
   try {
-    const params = {
-      client_id: CLIENT_ID,
-      client_secret: CLIENT_SECRET,
-      code,
-    };
+    // Check if we already have a token
+    const { access_token } = await getSyncStorage({ access_token: null });
     
-    const response = await fetch(`${GITHUB_TOKEN_URL}?${queryString.stringify(params)}`);
-    return await response.text();
+    if (access_token) {
+      showFeedback("Access Token Already Set!");
+      return;
+    }
+    
+    // Build auth URL with proper parameters
+    const authUrl = `${GITHUB_AUTH_URL}?${queryString.stringify({
+      client_id: CLIENT_ID,
+      redirect_uri: REDIRECT_URI,
+      scope: "public_repo"
+    })}`;
+    
+    // Launch OAuth flow
+    const token = await launchAuthFlow(authUrl);
+    
+    // Save token
+    await setSyncStorage({ access_token: token });
+    
+    // Update UI
+    const accessTokenInput = document.getElementById("token-input");
+    if (accessTokenInput) accessTokenInput.value = token;
+    
+    showFeedback("Access Token Set!");
   } catch (error) {
-    throw new Error("Failed to get access_token");
+    console.error("OAuth error:", error);
+    showFeedback(error.message || "Authentication failed");
   }
 }
 
-function getToken(url, interactive) {
+// Helper function to show feedback in the options page
+function showFeedback(message) {
+  const feedback = document.querySelector("#feedback");
+  if (feedback) {
+    feedback.textContent = message;
+    feedback.style.display = "block";
+    
+    // Auto-hide after 3 seconds
+    setTimeout(() => {
+      feedback.style.display = "none";
+    }, 3000);
+  }
+}
+
+// Simplified auth flow
+function launchAuthFlow(authUrl) {
   return new Promise((resolve, reject) => {
     chrome.identity.launchWebAuthFlow(
-      { url, interactive },
-      async (redirectURL) => {
+      { url: authUrl, interactive: true },
+      async (redirectUrl) => {
         if (chrome.runtime.lastError) {
-          reject(chrome.runtime.lastError);
+          reject(new Error(chrome.runtime.lastError.message));
           return;
         }
-
-        const query = queryString.extract(redirectURL);
-        if (!query) {
-          reject(new Error("Invalid redirect URI"));
+        
+        if (!redirectUrl) {
+          reject(new Error("Authentication was canceled"));
           return;
         }
-
-        const params = queryString.parse(query);
-
-        if (params.access_token) {
-          resolve(params.access_token);
-        } else if (params.code) {
-          try {
-            const response = await getTokenFromCode(params.code);
-            const responseParams = queryString.parse(response);
-            resolve(responseParams.access_token);
-          } catch (error) {
-            reject(error);
+        
+        try {
+          // Extract code from redirect URL
+          const query = queryString.extract(redirectUrl);
+          const params = queryString.parse(query);
+          
+          if (params.access_token) {
+            resolve(params.access_token);
+          } else if (params.code) {
+            // Exchange code for token
+            const tokenUrl = `${GITHUB_TOKEN_URL}?${queryString.stringify({
+              client_id: CLIENT_ID,
+              client_secret: CLIENT_SECRET,
+              code: params.code
+            })}`;
+            
+            const response = await fetch(tokenUrl);
+            const data = await response.text();
+            const tokenParams = queryString.parse(data);
+            
+            if (tokenParams.access_token) {
+              resolve(tokenParams.access_token);
+            } else {
+              reject(new Error("Failed to get access token"));
+            }
+          } else {
+            reject(new Error("No access token or code received"));
           }
-        } else {
-          reject(new Error("Neither access_token nor code available"));
+        } catch (error) {
+          reject(error);
         }
       }
     );
   });
 }
 
-async function getTokenFromOauth() {
-  try {
-    const { access_token } = await getSyncStorage({ access_token: null });
-    
-    if (!access_token) {
-      const url = getAuthUrl(GITHUB_AUTH_URL, REDIRECT_URI, "public_repo");
-      try {
-        const token = await getToken(url, true);
-        await setSyncStorage({ access_token: token });
-        
-        const accessTokenInput = document.getElementById("token-input");
-        if (accessTokenInput) accessTokenInput.value = token;
-        
-        const feedback = document.querySelector("#feedback");
-        if (feedback) {
-          feedback.textContent = "Access Token Set!";
-          feedback.style.display = "block";
-        }
-      } catch (error) {
-        const feedback = document.querySelector("#feedback");
-        if (feedback) {
-          feedback.textContent = error.message ? `Error: ${error.message}` : String(error);
-          feedback.style.display = "block";
-        }
-      }
-    } else {
-      const feedback = document.querySelector("#feedback");
-      if (feedback) {
-        feedback.textContent = "Access Token Already Set!";
-        feedback.style.display = "block";
-      }
-    }
-  } catch (error) {
-    console.error("OAuth error:", error);
-  }
-}
-
+// Export function
 window.getTokenFromOauth = getTokenFromOauth;

@@ -1,57 +1,57 @@
-// Simple query string utilities
+// Simplified query string utilities
 const queryString = {
+  // Parse a query string into an object
   parse(str) {
-    if (typeof str !== 'string') return {};
+    if (typeof str !== 'string' || !str.trim()) return {};
     
     const trimmedStr = str.trim().replace(/^(\?|#|&)/, '');
-    if (!trimmedStr) return {};
     
     return trimmedStr.split('&').reduce((result, param) => {
-      const [key, ...valueParts] = param.replace(/\+/g, ' ').split('=');
-      const value = valueParts.length > 0 ? valueParts.join('=') : null;
+      if (!param) return result;
       
-      const decodedKey = decodeURIComponent(key);
-      const decodedValue = value === null ? null : decodeURIComponent(value);
+      const [key, value] = param.split('=').map(part => 
+        decodeURIComponent(part.replace(/\+/g, ' '))
+      );
       
-      if (result[decodedKey] === undefined) {
-        result[decodedKey] = decodedValue;
-      } else if (Array.isArray(result[decodedKey])) {
-        result[decodedKey].push(decodedValue);
+      // Handle array values
+      if (result[key] !== undefined) {
+        result[key] = Array.isArray(result[key]) 
+          ? [...result[key], value] 
+          : [result[key], value];
       } else {
-        result[decodedKey] = [result[decodedKey], decodedValue];
+        result[key] = value;
       }
       
       return result;
     }, {});
   },
   
+  // Convert an object to a query string
   stringify(obj) {
     if (!obj) return '';
     
     return Object.keys(obj)
-      .sort()
+      .filter(key => obj[key] !== undefined)
       .map(key => {
         const value = obj[key];
         
-        if (value === undefined) return '';
         if (value === null) return encodeURIComponent(key);
         
         if (Array.isArray(value)) {
           return value
-            .slice()
-            .sort()
             .map(val => `${encodeURIComponent(key)}=${encodeURIComponent(val)}`)
             .join('&');
         }
         
         return `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
       })
-      .filter(x => x.length > 0)
       .join('&');
   },
   
+  // Extract query string from a URL
   extract(url) {
-    return url.split('?')[1] || '';
+    const queryIndex = url.indexOf('?');
+    return queryIndex >= 0 ? url.slice(queryIndex + 1) : '';
   }
 };
 

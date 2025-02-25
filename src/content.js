@@ -460,50 +460,6 @@ function update({ contributor, repoPath, currentNum, user }) {
   });
 }
 
-// Improved caching with local storage
-function getCachedData(key, maxAge = 3600000) { // Default 1 hour cache
-  try {
-    const cached = localStorage.getItem(`gce-cache-${key}`);
-    if (cached) {
-      const { data, timestamp } = JSON.parse(cached);
-      if (Date.now() - timestamp < maxAge) {
-        return data;
-      }
-    }
-    return null;
-  } catch (e) {
-    console.error("Cache read error:", e);
-    return null;
-  }
-}
-
-function setCachedData(key, data) {
-  try {
-    localStorage.setItem(`gce-cache-${key}`, JSON.stringify({
-      data,
-      timestamp: Date.now()
-    }));
-  } catch (e) {
-    console.error("Cache write error:", e);
-    // If localStorage is full, clear old caches
-    try {
-      // Use for...of instead of forEach
-      for (const storageKey of Object.keys(localStorage)) {
-        if (storageKey.startsWith('gce-cache-')) {
-          localStorage.removeItem(storageKey);
-        }
-      }
-      // Try again
-      localStorage.setItem(`gce-cache-${key}`, JSON.stringify({
-        data,
-        timestamp: Date.now()
-      }));
-    } catch (e) {
-      console.error("Failed to clear cache:", e);
-    }
-  }
-}
-
 document.addEventListener("DOMContentLoaded", () => {
   gitHubInjection(() => {
     if (isPR(location.pathname) || isIssue(location.pathname)) {
