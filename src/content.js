@@ -201,7 +201,7 @@ function createStatRow(scope, label, contributor, repoPath) {
 
 function createHoverPanelHTML({ contributor, repoPath, org }) {
 	return `
-    <div id="${ELEMENT_IDS.HOVER_PANEL}" class="position-absolute Box color-shadow-medium rounded-2 p-2" style="display: none; z-index: 100; top: 100%; left: -146px; min-width: 250px; margin-top: 4px;">
+    <div id="${ELEMENT_IDS.HOVER_PANEL}" class="position-absolute Box color-shadow-medium rounded-2 p-2" style="display: none; z-index: 100; top: 100%; left: -134px; min-width: 250px; margin-top: 4px;">
       <!-- Stats rows -->
       ${createStatRow("repo", "In this repo:", contributor, repoPath)}
       ${createStatRow("org", "In this org:", contributor, org)}
