@@ -45,7 +45,6 @@ If necessary, you may want to create or get a "access token" that uses the `publ
   - The [content script](src/content.js) was matching `"https://github.com/*/*/pull/*` which is correct, but if you start from the hompage, then the script won't ever be injected since github is using pushState to change urls. Now it will match `https://github.com` and then check for the specific url.
 - "https://api.github.com/*": to fetch issue/pr data
 - `"storage"`, to store access token, cache user PR data.
-- `"identity"`, to create an oauth request window.
  
 ---
 

@@ -46,6 +46,7 @@ async function setStorage(contributor, orgRepoPath, value) {
       try {
         const { access_token } = await getSyncStorage({ "access_token": null });
         if (access_token) {
+          // In MV3, we need to use clear() with a Promise
           await new Promise(resolve => chrome.storage.sync.clear(resolve));
           await setSyncStorage({ "access_token": access_token });
         }
@@ -56,17 +57,18 @@ async function setStorage(contributor, orgRepoPath, value) {
   }
 }
 
+// Get data from storage with caching
 async function getStorage(contributor, orgRepoPath) {
   const cacheKey = `${contributor}|${orgRepoPath}`;
   
   // Try to get from local storage first (faster)
   try {
-    const cached = localStorage.getItem(`gce-cache-${cacheKey}`);
-    if (cached) {
-      const { data, timestamp } = JSON.parse(cached);
-      // If cache is less than 1 hour old, use it
-      if (Date.now() - timestamp < 3600000) {
-        return { [cacheKey]: data };
+    const cachedData = localStorage.getItem(`gce-cache-${cacheKey}`);
+    if (cachedData) {
+      const parsed = JSON.parse(cachedData);
+      // Check if cache is less than 1 hour old
+      if (parsed.timestamp && Date.now() - parsed.timestamp < 3600000) {
+        return parsed.data;
       }
     }
   } catch (e) {
@@ -74,7 +76,13 @@ async function getStorage(contributor, orgRepoPath) {
   }
   
   // Fall back to sync storage
-  return getSyncStorage({ [cacheKey]: null });
+  try {
+    const result = await getSyncStorage({ [cacheKey]: null });
+    return result[cacheKey] || {};
+  } catch (e) {
+    console.error("Sync storage read error:", e);
+    return null;
+  }
 }
 
 // Export functions properly

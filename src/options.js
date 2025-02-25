@@ -1,8 +1,7 @@
-/* global getSyncStorage, setSyncStorage, getTokenFromOauth, showFeedback */
+/* global getSyncStorage, setSyncStorage */
 
 document.addEventListener("DOMContentLoaded", async () => {
   const accessTokenInput = document.getElementById("token-input");
-  const oauthLink = document.getElementById("use-oauth");
   const clearCacheLink = document.getElementById("clear-cache");
   const showPrivateReposInput = document.getElementById("show-private-repos");
   
@@ -16,21 +15,79 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (access_token) accessTokenInput.value = access_token;
     if (_showPrivateRepos) showPrivateReposInput.checked = _showPrivateRepos;
   } catch (error) {
-    showFeedback(`Error loading settings: ${error.message}`);
+    showFeedback(`Error loading settings: ${error.message}`, "error");
+  }
+
+  // Function to validate GitHub token
+  async function validateToken(token) {
+    if (!token) return false;
+    
+    try {
+      const response = await fetch('https://api.github.com/user', {
+        headers: {
+          'Authorization': `token ${token}`
+        }
+      });
+      
+      if (response.status === 401) {
+        return false;
+      }
+      
+      return response.ok;
+    } catch (error) {
+      console.error('Token validation error:', error);
+      return false;
+    }
+  }
+
+  // Helper function to show feedback in the options page
+  function showFeedback(message, type = 'success') {
+    const feedback = document.querySelector("#feedback");
+    if (feedback) {
+      feedback.textContent = message;
+      feedback.style.display = "block";
+      
+      // Reset classes
+      feedback.className = "feedback";
+      
+      // Add appropriate class based on type
+      if (type === 'error') {
+        feedback.classList.add('error');
+      } else if (type === 'warning') {
+        feedback.classList.add('warning');
+      } else {
+        feedback.classList.add('success');
+      }
+      
+      // Auto-hide after 3 seconds
+      setTimeout(() => {
+        feedback.style.display = "none";
+      }, 3000);
+    }
   }
 
   // Save token when changed
   accessTokenInput.addEventListener("change", async () => {
     try {
-      await setSyncStorage({ "access_token": accessTokenInput.value });
-      showFeedback("Token saved");
+      const token = accessTokenInput.value.trim();
+      
+      // If token is provided, validate it
+      if (token) {
+        showFeedback("Validating token...");
+        const isValid = await validateToken(token);
+        
+        if (!isValid) {
+          showFeedback("Invalid token. Please check your token and try again.", "error");
+          return;
+        }
+      }
+      
+      await setSyncStorage({ "access_token": token });
+      showFeedback("Token saved successfully");
     } catch (error) {
-      showFeedback(`Error saving token: ${error.message}`);
+      showFeedback(`Error saving token: ${error.message}`, "error");
     }
   });
-
-  // OAuth button click handler
-  oauthLink.addEventListener("click", getTokenFromOauth);
 
   // Clear cache button click handler
   clearCacheLink.addEventListener("click", async () => {
@@ -50,12 +107,19 @@ document.addEventListener("DOMContentLoaded", async () => {
       
       // Restore token if it existed
       if (token) {
-        await setSyncStorage({ "access_token": token });
+        // Validate token before restoring
+        const isValid = await validateToken(token);
+        if (isValid) {
+          await setSyncStorage({ "access_token": token });
+        } else {
+          showFeedback("Your token appears to be invalid and was not restored.", "warning");
+          return;
+        }
       }
       
       showFeedback("Cache cleared successfully");
     } catch (error) {
-      showFeedback(`Error clearing cache: ${error.message}`);
+      showFeedback(`Error clearing cache: ${error.message}`, "error");
     }
   });
 
@@ -65,7 +129,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       await setSyncStorage({ "_showPrivateRepos": showPrivateReposInput.checked });
       showFeedback("Setting saved");
     } catch (error) {
-      showFeedback(`Error saving setting: ${error.message}`);
+      showFeedback(`Error saving setting: ${error.message}`, "error");
     }
   });
   
