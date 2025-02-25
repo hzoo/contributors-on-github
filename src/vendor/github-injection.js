@@ -1,4 +1,4 @@
-// https://github.com/octo-linker/injection 1.0.1
+// https://github.com/octo-linker/injection 1.1.0 (2022-07-13)
 'use strict';
 
 const gitHubInjection = cb => {
@@ -11,6 +11,7 @@ const gitHubInjection = cb => {
   }
 
   document.addEventListener('pjax:end', cb);
+  document.addEventListener('turbo:render', cb);
   cb();
 };
 
