@@ -2,10 +2,17 @@
 
 // Define key selectors as constants for easier maintenance
 const SELECTORS = {
-	TIMELINE_COMMENT_HEADER: ".timeline-comment-header>h3",
+	// Pull request selectors
+	PR_TIMELINE_COMMENT: ".timeline-comment-header>h3",
+	FIRST_CONTRIBUTOR_PR: ".timeline-comment a.author",
+	
+	// Issue selectors
+	ISSUE_HEADER: ".js-issue-title, [data-testid='issue-body']",
+	FIRST_CONTRIBUTOR_ISSUE: "[data-testid='issue-body-header-author'], .js-issue-header-byline .author",
+	
+	// Common selectors
 	CURRENT_USER_IMG: ".Header-link img",
-	PRIVATE_LABEL: ".Label",
-	FIRST_CONTRIBUTOR: ".timeline-comment a.author",
+	PRIVATE_LABEL: ".Label"
 };
 
 // Use GitHub's current icon styling
@@ -44,7 +51,23 @@ const isPrivate = () =>
 
 // Get the username of the first contributor *in the DOM* of the page
 function getFirstContributor() {
-	return document.querySelector(SELECTORS.FIRST_CONTRIBUTOR)?.innerText;
+	// Try PR selector first, then issue selector
+	return isPR(location.pathname) 
+		? document.querySelector(SELECTORS.FIRST_CONTRIBUTOR_PR)?.innerText 
+		: document.querySelector(SELECTORS.FIRST_CONTRIBUTOR_ISSUE)?.innerText;
+}
+
+// Get all comment authors on the page
+function getAllCommentAuthors() {
+	const authors = new Set();
+	
+	// Add the first contributor (issue/PR creator)
+	const firstContributor = getFirstContributor();
+	if (firstContributor) {
+		authors.add(firstContributor);
+	}
+	
+	return Array.from(authors);
 }
 
 function getPathInfo() {
@@ -189,31 +212,11 @@ function createStatRow(scope, label, contributor, repoPath) {
       </div>
       <div class="d-flex flex-items-center ml-auto">
         <div class="d-inline-flex flex-items-center mr-2">
-          ${ICONS.PR}<a href="${issueOrPrLink("pr", scope === "repo" ? repoPath : scope === "org" ? repoPath : "__self", contributor)}" class="ml-1 Text-sc-17v1xeu-0 gce-stat-number Link--secondary" id="gce-${scope}-pr-count">...</a>
+          ${ICONS.PR}<a href="${issueOrPrLink("pr", scope === "repo" ? repoPath : scope === "org" ? repoPath : "__self", contributor)}" class="ml-1 gce-stat-number gce-text Link--secondary" id="gce-${scope}-pr-count">...</a>
         </div>
         <div class="d-inline-flex flex-items-center">
-          ${ICONS.ISSUE}<a href="${issueOrPrLink("issue", scope === "repo" ? repoPath : scope === "org" ? repoPath : "__self", contributor)}" class="ml-1 Text-sc-17v1xeu-0 gce-stat-number Link--secondary" id="gce-${scope}-issue-count">...</a>
+          ${ICONS.ISSUE}<a href="${issueOrPrLink("issue", scope === "repo" ? repoPath : scope === "org" ? repoPath : "__self", contributor)}" class="ml-1 gce-stat-number gce-text Link--secondary" id="gce-${scope}-issue-count">...</a>
         </div>
-      </div>
-    </div>
-  `;
-}
-
-function createHoverPanelHTML({ contributor, repoPath, org }) {
-	return `
-    <div id="${ELEMENT_IDS.HOVER_PANEL}" class="position-absolute Box color-shadow-medium rounded-2 p-2" style="display: none; z-index: 100; top: 100%; left: -134px; min-width: 250px; margin-top: 4px;">
-      <!-- Stats rows -->
-      ${createStatRow("repo", "In this repo:", contributor, repoPath)}
-      ${createStatRow("org", "In this org:", contributor, org)}
-      ${createStatRow("account", "In this account:", contributor, "__self")}
-      
-      <div class="border-top mt-1 mb-1"></div>
-      <div class="d-flex flex-items-center">
-        <button id="${ELEMENT_IDS.SYNC_BUTTON}" class="btn-link Link--secondary d-flex flex-items-center color-fg-muted">
-          ${ICONS.SYNC}
-          <span class="ml-1 f6">refresh</span>
-        </button>
-        <span class="color-fg-subtle f6 ml-auto" id="${ELEMENT_IDS.UPDATE_TIME}"></span>
       </div>
     </div>
   `;
@@ -223,19 +226,26 @@ function injectStyles() {
 	const styleEl = document.createElement('style');
 	styleEl.id = 'gce-responsive-styles';
 	styleEl.textContent = `
-		#${ELEMENT_IDS.CONTAINER} {
+		[id^="${ELEMENT_IDS.CONTAINER}"] {
 			margin-right: 8px;
 			align-items: center;
+			display: inline-flex;
+			margin-left: 8px;
+			position: relative;
+			z-index: 101; /* Ensure container has higher z-index */
 		}
-		#${ELEMENT_IDS.CONTAINER} svg {
+		[id^="${ELEMENT_IDS.CONTAINER}"] svg {
 			vertical-align: text-bottom;
 		}
-		#${ELEMENT_IDS.HOVER_PANEL} {
+		.gce-hover-panel {
 			box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
 			border: 1px solid var(--color-border-default);
-			background-color: var(--color-canvas-default);
+			z-index: 101;
+			position: fixed; /* Change to fixed positioning */
+			min-width: 250px;
+			margin-top: 4px;
 		}
-		#${ELEMENT_IDS.HOVER_PANEL} .Text-sc-17v1xeu-0 {
+		.gce-text {
 			font-size: 12px;
 			line-height: 1.5;
 		}
@@ -254,12 +264,15 @@ function injectStyles() {
 			text-decoration: underline;
 			color: var(--color-accent-fg);
 		}
-		#${ELEMENT_IDS.SYNC_BUTTON} {
+		.gce-sync-button {
 			padding: 2px 0;
 		}
 		@media (max-width: 768px) {
 			.timeline-comment-header {
 				flex-wrap: wrap;
+			}
+			[id^="${ELEMENT_IDS.CONTAINER}"] {
+				margin-top: 4px;
 			}
 		}
 	`;
@@ -267,95 +280,150 @@ function injectStyles() {
 }
 
 function injectInitialUI({ contributor, repoPath, currentNum, org }) {
-	const $elem = document.querySelector(SELECTORS.TIMELINE_COMMENT_HEADER);
-	
 	// Don't inject if already present
 	if (document.getElementById(ELEMENT_IDS.PR_COUNT)) return;
+	
+	// Get the appropriate container element based on whether we're on a PR or issue page
+	let $elem;
+	if (isPR(location.pathname)) {
+		$elem = document.querySelector(SELECTORS.PR_TIMELINE_COMMENT);
+	} else if (isIssue(location.pathname)) {
+		$elem = document.querySelector(SELECTORS.ISSUE_HEADER);
+	}
+	
+	// If we can't find a suitable container, exit
+	if (!$elem) {
+		console.warn("GitHub Contributors Extension: Could not find a suitable container element");
+		return;
+	}
 
 	// Create the main container with GitHub utility classes
-	$elem.insertAdjacentHTML(
-		"beforebegin",
-		`<div class="d-flex flex-items-center position-relative" id="${ELEMENT_IDS.CONTAINER}">
-      <div class="d-flex flex-items-center position-relative">
-        <a href="${issueOrPrLink("pr", repoPath, contributor)}" 
-           id="${ELEMENT_IDS.PR_COUNT}" 
-           class="Link--secondary color-fg-muted d-inline-flex flex-items-center no-underline mr-2" 
-           aria-label="Pull requests by this user">
-           ${ICONS.PR}<span class="ml-1 Text-sc-17v1xeu-0" style="font-size: 12px; line-height: 1.5;">${"..."}</span>
-        </a>
-        <a href="${issueOrPrLink("issue", repoPath, contributor)}" 
-           id="${ELEMENT_IDS.ISSUE_COUNT}" 
-           class="Link--secondary color-fg-muted d-inline-flex flex-items-center no-underline" 
-           aria-label="Issues by this user">
-           ${ICONS.ISSUE}<span class="ml-1 Text-sc-17v1xeu-0" style="font-size: 12px; line-height: 1.5;">${"..."}</span>
-        </a>
-        
-        ${createHoverPanelHTML({ contributor, repoPath, org })}
-      </div>
-    </div>`,
-	);
+	const containerHTML = `
+		<div class="d-flex flex-items-center position-relative" id="${ELEMENT_IDS.CONTAINER}" data-username="${contributor}">
+			<div class="d-flex flex-items-center position-relative">
+				<a href="${issueOrPrLink("pr", repoPath, contributor)}" 
+					id="${ELEMENT_IDS.PR_COUNT}" 
+					class="Link--secondary color-fg-muted d-inline-flex flex-items-center no-underline mr-2" 
+					aria-label="Pull requests by this user">
+					${ICONS.PR}<span class="ml-1 gce-text">${"..."}</span>
+				</a>
+				<a href="${issueOrPrLink("issue", repoPath, contributor)}" 
+					id="${ELEMENT_IDS.ISSUE_COUNT}" 
+					class="Link--secondary color-fg-muted d-inline-flex flex-items-center no-underline" 
+					aria-label="Issues by this user">
+					${ICONS.ISSUE}<span class="ml-1 gce-text">${"..."}</span>
+				</a>
+				
+				<div id="${ELEMENT_IDS.HOVER_PANEL}" class="gce-hover-panel Box color-shadow-medium rounded-2 p-2" style="display: none;">
+					<!-- Stats rows -->
+					${createStatRow("repo", "In this repo:", contributor, repoPath)}
+					${createStatRow("org", "In this org:", contributor, org)}
+					${createStatRow("account", "In this account:", contributor, "__self")}
+					
+					<div class="border-top mt-1 mb-1"></div>
+					<div class="d-flex flex-items-center">
+						<button id="${ELEMENT_IDS.SYNC_BUTTON}" class="btn-link Link--secondary d-flex flex-items-center color-fg-muted" data-username="${contributor}">
+							${ICONS.SYNC}
+							<span class="ml-1 f6">refresh</span>
+						</button>
+						<span class="color-fg-subtle f6 ml-auto" id="${ELEMENT_IDS.UPDATE_TIME}"></span>
+					</div>
+				</div>
+			</div>
+		</div>
+	`;
+	
+	// Insert the container in the appropriate location based on page type
+	if (isPR(location.pathname)) {
+		$elem.insertAdjacentHTML("beforebegin", containerHTML);
+	} else if (isIssue(location.pathname)) {
+		// For issues, we need to find a better insertion point within the issue header
+		const issueHeader = document.querySelector(SELECTORS.FIRST_CONTRIBUTOR_ISSUE);
+		if (issueHeader) {
+			// Insert after the author element
+			issueHeader.insertAdjacentHTML("afterend", containerHTML);
+		} else {
+			// Fallback to inserting at the beginning of the issue body
+			$elem.insertAdjacentHTML("afterbegin", containerHTML);
+		}
+	}
 
 	injectStyles();
-	setupHoverBehavior();
-	setupSyncButton({ contributor, repoPath, currentNum, org });
+	setupGlobalEventHandlers({ repoPath, currentNum, org });
 	
 	// Initial fetch of all stats
 	fetchAllStats({ contributor, repoPath, currentNum, org });
 }
 
-// Set up hover behavior for the panel
-function setupHoverBehavior() {
-	const $container = document.getElementById(ELEMENT_IDS.CONTAINER);
-	const $hoverPanel = document.getElementById(ELEMENT_IDS.HOVER_PANEL);
-	const $statsContainer = $container.querySelector(".d-flex.flex-items-center");
+// Set up global event handlers using event delegation
+function setupGlobalEventHandlers({ repoPath, currentNum, org }) {
+	// Only set up once
+	if (window.gceEventHandlersInitialized) return;
+	window.gceEventHandlersInitialized = true;
 	
-	let isPanelVisible = false;
-	let isHoveringPanel = false;
+	const container = document.getElementById(ELEMENT_IDS.CONTAINER);
+	const hoverPanel = document.getElementById(ELEMENT_IDS.HOVER_PANEL);
+	const syncButton = document.getElementById(ELEMENT_IDS.SYNC_BUTTON);
 	
-	function showPanel() {
-		$hoverPanel.style.display = "block";
-		isPanelVisible = true;
-	}
+	if (!container || !hoverPanel) return;
 	
-	function hidePanel() {
-		if (!isHoveringPanel) {
-			$hoverPanel.style.display = "none";
-			isPanelVisible = false;
+	// Handle hover events for the container
+	container.addEventListener('mouseenter', () => {
+		// Position the panel relative to the container
+		const rect = container.getBoundingClientRect();
+		hoverPanel.style.top = `${rect.bottom}px`;
+		hoverPanel.style.left = `${rect.left}px`;
+		hoverPanel.style.display = 'block';
+	});
+	
+	container.addEventListener('mouseleave', () => {
+		// Hide after a short delay to allow moving to the panel
+		setTimeout(() => {
+			// Only hide if not hovering the panel
+			if (!hoverPanel.matches(':hover') && !container.matches(':hover')) {
+				hoverPanel.style.display = 'none';
+			}
+		}, CONFIG.HOVER_DELAY);
+	});
+	
+	// Handle hover events for the panel
+	hoverPanel.addEventListener('mouseleave', () => {
+		// Hide after a short delay
+		setTimeout(() => {
+			// Only hide if not hovering the container or panel
+			if (!hoverPanel.matches(':hover') && !container.matches(':hover')) {
+				hoverPanel.style.display = 'none';
+			}
+		}, CONFIG.HOVER_DELAY);
+	});
+	
+	// Handle clicks outside the panel to close it
+	document.addEventListener('click', (e) => {
+		if (hoverPanel.style.display === 'block' && 
+			!container.contains(e.target) && 
+			!hoverPanel.contains(e.target)) {
+			hoverPanel.style.display = 'none';
 		}
+	});
+	
+	// Handle sync button click
+	if (syncButton) {
+		syncButton.addEventListener('click', () => {
+			const username = container.dataset.username;
+			if (!username) return;
+			
+			// Clear local cache for this contributor
+			clearContributorCache(username);
+			
+			// Fetch all scopes for this contributor
+			fetchAllStats({ 
+				contributor: username, 
+				repoPath, 
+				currentNum, 
+				org
+			});
+		});
 	}
-	
-	$statsContainer.addEventListener("mouseenter", showPanel);
-	$statsContainer.addEventListener("mouseleave", () => {
-		setTimeout(hidePanel, CONFIG.HOVER_DELAY);
-	});
-	
-	$hoverPanel.addEventListener("mouseenter", () => {
-		isHoveringPanel = true;
-	});
-	
-	$hoverPanel.addEventListener("mouseleave", () => {
-		isHoveringPanel = false;
-		hidePanel();
-	});
-	
-	// Close panel when clicking outside
-	document.addEventListener("click", (e) => {
-		if (isPanelVisible && !$container.contains(e.target)) {
-			hidePanel();
-		}
-	});
-}
-
-// Set up the sync button functionality
-function setupSyncButton({ contributor, repoPath, currentNum, org }) {
-	const $syncButton = document.getElementById(ELEMENT_IDS.SYNC_BUTTON);
-	$syncButton.addEventListener("click", () => {
-		// Clear local cache for this contributor
-		clearContributorCache(contributor);
-		
-		// Fetch all scopes
-		fetchAllStats({ contributor, repoPath, currentNum, org });
-	});
 }
 
 // Clear cache for a specific contributor
@@ -391,6 +459,67 @@ function fetchAllStats({ contributor, repoPath, currentNum, org }) {
 	fetchStats({ contributor, repoPath: "__self", currentNum, scope: "account" });
 }
 
+// Update stats display for a specific container
+function updateStatsDisplay({ prText, issueText, scope, lastUpdate }) {
+	// Update the main display (always shows repo stats)
+	if (scope === "repo") {
+		const prNode = document.getElementById(ELEMENT_IDS.PR_COUNT);
+		if (prNode) {
+			const spanNode = prNode.querySelector("span");
+			if (spanNode) {
+				spanNode.textContent = prText;
+			}
+		}
+
+		const issueNode = document.getElementById(ELEMENT_IDS.ISSUE_COUNT);
+		if (issueNode) {
+			const spanNode = issueNode.querySelector("span");
+			if (spanNode) {
+				spanNode.textContent = issueText;
+			}
+		}
+	}
+	
+	// Update the hover panel stats based on scope
+	const prScopeNode = document.getElementById(`gce-${scope}-pr-count`);
+	if (prScopeNode) {
+		prScopeNode.textContent = padNumber(prText);
+	}
+	
+	const issueScopeNode = document.getElementById(`gce-${scope}-issue-count`);
+	if (issueScopeNode) {
+		issueScopeNode.textContent = padNumber(issueText);
+	}
+
+	// Update timestamp
+	const updateTimeNode = document.getElementById(ELEMENT_IDS.UPDATE_TIME);
+	if (updateTimeNode && typeof lastUpdate === "number") {
+		updateTimeNode.textContent = formatTimestamp(lastUpdate);
+	}
+}
+
+// Format timestamp for display
+function formatTimestamp(lastUpdate) {
+	// Format the time in a more compact way
+	const now = new Date();
+	const updated = new Date(lastUpdate);
+	const diffMs = now - updated;
+	const diffMins = Math.round(diffMs / 60000);
+	const diffHours = Math.round(diffMs / 3600000);
+	const diffDays = Math.round(diffMs / 86400000);
+
+	let timeText = "";
+	if (diffMins < 60) {
+		timeText = `${diffMins}m`;
+	} else if (diffHours < 24) {
+		timeText = `${diffHours}h`;
+	} else {
+		timeText = `${diffDays}d`;
+	}
+
+	return `${timeText} ago`;
+}
+
 // Handle API errors and update UI accordingly
 function handleApiError(repoInfo, scope) {
 	if (repoInfo.errors) {
@@ -410,7 +539,7 @@ function handleApiError(repoInfo, scope) {
 			updateStatsDisplay({
 				prText: "Rate limited",
 				issueText: "Rate limited",
-				scope,
+				scope
 			});
 			showToast(
 				"API rate limit exceeded. Try again later or add an access token in the [Contributors on Github] settings.",
@@ -424,7 +553,7 @@ function handleApiError(repoInfo, scope) {
 			updateStatsDisplay({
 				prText: "Auth error",
 				issueText: "Auth error",
-				scope,
+				scope
 			});
 			showToast(
 				"Your GitHub token is invalid or has expired. Please update it in the [Contributors on Github] options.",
@@ -438,7 +567,7 @@ function handleApiError(repoInfo, scope) {
 			updateStatsDisplay({
 				prText: "Auth needed",
 				issueText: "Auth needed",
-				scope,
+				scope
 			});
 			showToast(
 				"GitHub API rate limit reached. Please add an access token in the [Contributors on Github] settings.",
@@ -508,7 +637,7 @@ function fetchStats({ contributor, repoPath, currentNum, scope, user }) {
 							prText, 
 							issueText, 
 							scope, 
-							lastUpdate: repoInfo.lastUpdate 
+							lastUpdate: repoInfo.lastUpdate
 						});
 					})
 					.catch((error) => {
@@ -532,59 +661,6 @@ function padNumber(text) {
 		return text.toString().padStart(CONFIG.STAT_PADDING, ' ');
 	}
 	return text;
-}
-
-function updateStatsDisplay({ prText, issueText, scope, lastUpdate }) {
-	// Update the main display (always shows repo stats)
-	if (scope === "repo") {
-		const prNode = document.getElementById(ELEMENT_IDS.PR_COUNT).querySelector("span");
-		if (prNode) {
-			prNode.textContent = prText;
-		}
-
-		const issueNode = document.getElementById(ELEMENT_IDS.ISSUE_COUNT).querySelector("span");
-		if (issueNode) {
-			issueNode.textContent = issueText;
-		}
-	}
-	
-	// Update the hover panel stats based on scope
-	const prScopeNode = document.getElementById(`gce-${scope}-pr-count`);
-	if (prScopeNode) {
-		prScopeNode.textContent = padNumber(prText);
-	}
-	
-	const issueScopeNode = document.getElementById(`gce-${scope}-issue-count`);
-	if (issueScopeNode) {
-		issueScopeNode.textContent = padNumber(issueText);
-	}
-
-	updateTimestamp(lastUpdate);
-}
-
-// Update the timestamp display
-function updateTimestamp(lastUpdate) {
-	const updateTime = document.getElementById(ELEMENT_IDS.UPDATE_TIME);
-	if (updateTime && typeof lastUpdate === "number") {
-		// Format the time in a more compact way
-		const now = new Date();
-		const updated = new Date(lastUpdate);
-		const diffMs = now - updated;
-		const diffMins = Math.round(diffMs / 60000);
-		const diffHours = Math.round(diffMs / 3600000);
-		const diffDays = Math.round(diffMs / 86400000);
-
-		let timeText = "";
-		if (diffMins < 60) {
-			timeText = `${diffMins}m`;
-		} else if (diffHours < 24) {
-			timeText = `${diffHours}h`;
-		} else {
-			timeText = `${diffDays}d`;
-		}
-
-		updateTime.textContent = `${timeText} ago`;
-	}
 }
 
 // Improved error handling with toast notifications
@@ -648,9 +724,18 @@ function initializeContributorStats() {
 			(result) => {
 				if (!result[STORAGE_KEYS.SHOW_PRIVATE_REPOS] && isPrivate()) return;
 
-				if (getFirstContributor()) {
-					injectInitialUI(getPathInfo());
-				}
+				// Process the main issue/PR author
+				setTimeout(() => {
+					const contributor = getFirstContributor();
+					const pathInfo = getPathInfo();
+					
+					if (contributor) {
+						// Process the first contributor (issue/PR creator)
+						injectInitialUI(pathInfo);
+					} else {
+						console.warn("GitHub Contributors Extension: Could not find contributor");
+					}
+				}, 500);
 			},
 		);
 	}
@@ -664,5 +749,42 @@ document.addEventListener("DOMContentLoaded", () => {
 	} else {
 		// Fallback to direct initialization
 		initializeContributorStats();
+		
+		// Set up a mutation observer to detect when GitHub's dynamic content loads
+		setupMutationObserver();
 	}
 });
+
+// Set up a mutation observer to detect when GitHub's dynamic content loads
+function setupMutationObserver() {
+	// Create a mutation observer to watch for changes to the DOM
+	const observer = new MutationObserver((mutations) => {
+		// Check if we're on a PR or issue page
+		if (!isPR(location.pathname) && !isIssue(location.pathname)) return;
+		
+		// Check if the first contributor element is now available
+		const contributor = getFirstContributor();
+		if (contributor) {
+			const pathInfo = getPathInfo();
+			
+			// If we found the contributor and our UI isn't injected yet, inject it
+			if (!document.getElementById(ELEMENT_IDS.CONTAINER)) {
+				// Process the first contributor (issue/PR creator)
+				injectInitialUI(pathInfo);
+				
+				// No need to keep observing for the main contributor
+				observer.disconnect();
+			}
+		}
+	});
+	
+	// Start observing the document with the configured parameters
+	observer.observe(document.body, { 
+		childList: true, 
+		subtree: true 
+	});
+}
+
+// Also handle navigation events for single-page app behavior
+document.addEventListener("pjax:end", initializeContributorStats);
+document.addEventListener("turbo:render", initializeContributorStats);
