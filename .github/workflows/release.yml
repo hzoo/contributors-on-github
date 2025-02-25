@@ -51,7 +51,7 @@ jobs:
               cd $DIRECTORY && npx chrome-webstore-upload-cli@3 upload --auto-publish
               ;;
             firefox)
-              cd $DIRECTORY && npx web-ext-submit@5
+              cd $DIRECTORY && npx web-ext@8
               ;;
           esac
         env:
