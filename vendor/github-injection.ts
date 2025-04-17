@@ -1,7 +1,8 @@
 // https://github.com/octo-linker/injection 1.1.0 (2022-07-13)
-'use strict';
 
-const gitHubInjection = cb => {
+type GitHubInjectionCallback = () => void;
+
+const gitHubInjection = (cb: GitHubInjectionCallback): void => {
   if (!cb) {
     throw new Error('Missing argument callback');
   }
@@ -15,9 +16,5 @@ const gitHubInjection = cb => {
   cb();
 };
 
-// Export the gitHubInjection function for **Node.js**
-// Otherwise leave it as a global
-if (typeof exports !== 'undefined') {
-  module.exports = gitHubInjection;
-  exports = module.exports;
-}
+// Use ES module export
+export default gitHubInjection;

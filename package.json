@@ -3,9 +3,16 @@
   "private": true,
   "version": "1.0.9",
   "description": "Show github contributor's stats (# of Issues/PRs)",
-  "main": "index.js",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\""
+    "dev": "wxt",
+    "dev:firefox": "wxt --browser firefox",
+    "build": "wxt build",
+    "build:firefox": "wxt build --browser firefox",
+    "zip": "wxt zip",
+    "zip:firefox": "wxt zip --browser firefox",
+    "compile": "tsc --noEmit",
+    "postinstall": "wxt prepare"
   },
   "repository": {
     "type": "git",
@@ -14,6 +21,11 @@
   "keywords": [],
   "author": "Henry Zhu",
   "license": "MIT",
+  "devDependencies": {
+    "@types/chrome": "^0.0.315",
+    "typescript": "^5.8.3",
+    "wxt": "^0.20.1"
+  },
   "bugs": {
     "url": "https://github.com/hzoo/contributors-on-github/issues"
   },

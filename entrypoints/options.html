@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contributors on GitHub Options</title>
+    <style>
+      :root {
+        /* GitHub Light Theme Colors */
+        --color-canvas-default: #ffffff;
+        --color-canvas-subtle: #f6f8fa;
+        --color-border-default: #d0d7de;
+        --color-border-muted: #d8dee4;
+        --color-fg-default: #24292f;
+        --color-fg-muted: #57606a;
+        --color-fg-subtle: #6e7781;
+        --color-accent-fg: #0969da;
+        --color-success-fg: #1a7f37;
+        --color-attention-fg: #9a6700;
+        --color-danger-fg: #cf222e;
+        --color-primer-shadow-focus: 0 0 0 3px rgba(9, 105, 218, 0.3);
+        --color-btn-primary-bg: #2da44e;
+        --color-btn-primary-hover-bg: #2c974b;
+        --color-btn-primary-text: #ffffff;
+        --color-btn-border: rgba(27, 31, 36, 0.15);
+        --font-size-base: 14px;
+        --font-size-sm: 12px;
+        --font-weight-semibold: 600;
+        --line-height-base: 1.5;
+        --border-radius: 6px;
+        --spacing-1: 0.25rem; /* 4px */
+        --spacing-2: 0.5rem;  /* 8px */
+        --spacing-3: 1rem;    /* 16px */
+        --spacing-4: 1.5rem;  /* 24px */
+      }
+
+      /* Dark mode support */
+      @media (prefers-color-scheme: dark) {
+        :root {
+          /* GitHub Dark Theme Colors */
+          --color-canvas-default: #0d1117;
+          --color-canvas-subtle: #161b22;
+          --color-border-default: #30363d;
+          --color-border-muted: #21262d;
+          --color-fg-default: #c9d1d9;
+          --color-fg-muted: #8b949e;
+          --color-fg-subtle: #6e7681;
+          --color-accent-fg: #58a6ff;
+          --color-success-fg: #3fb950;
+          --color-attention-fg: #d29922;
+          --color-danger-fg: #f85149;
+          --color-primer-shadow-focus: 0 0 0 3px #0c2d6b;
+          --color-btn-primary-bg: #238636;
+          --color-btn-primary-hover-bg: #2ea043;
+          --color-btn-primary-text: #ffffff;
+          --color-btn-border: rgba(240, 246, 252, 0.1);
+        }
+      }
+      
+      /* Basic Reset & Body */
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+        font-size: var(--font-size-base);
+        line-height: var(--line-height-base);
+        color: var(--color-fg-default);
+        background-color: var(--color-canvas-default);
+        max-width: 640px;
+        margin: 0 auto;
+        padding: var(--spacing-4) var(--spacing-3); /* Reduced top/bottom padding */
+      }
+      
+      /* Typography & Elements */
+      h3 {
+        font-size: var(--font-size-base);
+        font-weight: var(--font-weight-semibold);
+        margin-bottom: var(--spacing-2); /* Reduced margin */
+        border-bottom: 1px solid var(--color-border-muted);
+        padding-bottom: var(--spacing-1);
+      }
+      p {
+        margin-bottom: var(--spacing-3);
+        color: var(--color-fg-muted);
+        font-size: var(--font-size-base);
+      }
+      p.small {
+        font-size: var(--font-size-sm);
+        color: var(--color-fg-subtle);
+        margin-top: var(--spacing-1);
+        margin-bottom: var(--spacing-2); /* Add consistent bottom margin */
+      }
+      code {
+        font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
+        font-size: 0.875em; /* Relative to parent */
+        background-color: var(--color-canvas-subtle);
+        padding: 0.2em 0.4em;
+        border-radius: var(--border-radius);
+        border: 1px solid var(--color-border-muted); /* Add subtle border */
+      }
+      hr {
+        border: none;
+        border-top: 1px solid var(--color-border-muted);
+        margin: var(--spacing-4) 0; /* Separator */
+      }
+
+      /* Utility Classes */
+      .mb-1 { margin-bottom: var(--spacing-1) !important; } /* 4px */
+      .mb-2 { margin-bottom: var(--spacing-2) !important; } /* 8px */
+      .mb-3 { margin-bottom: var(--spacing-3) !important; } /* 16px */
+      .mb-4 { margin-bottom: var(--spacing-4) !important; } /* 24px */
+      .mt-2 { margin-top: var(--spacing-2) !important; }    /* 8px */
+      .d-flex { display: flex !important; }
+      .items-center { align-items: center !important; }
+      
+      /* Form elements */
+      .form-group {
+        margin-bottom: var(--spacing-3); /* 16px */
+      }
+      label {
+        display: block;
+        margin-bottom: var(--spacing-1); /* Reduced margin */
+        font-weight: var(--font-weight-semibold);
+        font-size: var(--font-size-base);
+      }
+      .form-control {
+        width: 100%;
+        padding: var(--spacing-2) var(--spacing-3);
+        font-size: var(--font-size-base);
+        line-height: var(--line-height-base);
+        color: var(--color-fg-default);
+        background-color: var(--color-canvas-default);
+        border: 1px solid var(--color-border-default);
+        border-radius: var(--border-radius);
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+      }
+      .form-control:focus {
+        border-color: var(--color-accent-fg);
+        outline: none;
+        box-shadow: var(--color-primer-shadow-focus);
+      }
+      .form-checkbox {
+        margin-right: var(--spacing-2); /* 8px */
+        vertical-align: middle;
+      }
+      
+      /* Buttons */
+      .btn {
+        display: inline-block;
+        padding: var(--spacing-2) var(--spacing-3);
+        font-size: var(--font-size-base);
+        font-weight: var(--font-weight-semibold);
+        line-height: var(--line-height-base);
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: middle;
+        cursor: pointer;
+        user-select: none;
+        border: 1px solid var(--color-btn-border);
+        border-radius: var(--border-radius);
+        background-color: var(--color-canvas-subtle);
+        color: var(--color-fg-default);
+        text-decoration: none;
+        transition: background-color 0.2s, border-color 0.2s;
+      }
+      .btn:hover {
+        background-color: var(--color-canvas-subtle);
+        border-color: var(--color-border-muted);
+      }
+      .btn-primary {
+        background-color: var(--color-btn-primary-bg);
+        color: var(--color-btn-primary-text);
+        border-color: var(--color-btn-primary-bg);
+      }
+      .btn-primary:hover {
+        background-color: var(--color-btn-primary-hover-bg);
+        border-color: var(--color-btn-primary-hover-bg);
+      }
+            
+      /* Feedback messages */
+      .feedback {
+        padding: var(--spacing-2) var(--spacing-3);
+        border-radius: var(--border-radius);
+        margin-bottom: var(--spacing-3);
+        font-size: var(--font-size-sm);
+        border-width: 1px;
+        border-style: solid;
+        display: none; /* Hidden by default */
+      }
+      .feedback.success {
+        background-color: rgba(46, 160, 67, 0.1);
+        color: var(--color-success-fg);
+        border-color: rgba(46, 160, 67, 0.4);
+      }
+      .feedback.error {
+        background-color: rgba(248, 81, 73, 0.1);
+        color: var(--color-danger-fg);
+        border-color: rgba(248, 81, 73, 0.4);
+      }
+      .feedback.warning {
+        background-color: rgba(210, 153, 34, 0.1);
+        color: var(--color-attention-fg);
+        border-color: rgba(210, 153, 34, 0.4);
+      }
+    </style>
+    <script type="module" src="../src/options.ts"></script>
+  </head>
+  <body>
+    <div id="feedback" class="feedback"></div>
+    
+    <h3>GitHub Access Token</h3>
+    <p>Needed for higher API rate limits and private repository access.</p>
+    <p class="small mb-2">Using a token increases the API rate limit (10 -> 30 req/min).</p>
+    <div class="form-group">
+      <a id="gh-token-link" href="https://github.com/settings/tokens/new?scopes=public_repo&description=Contributors%20on%20Github" class="btn mb-2" target="_blank">
+        Create Token
+      </a>
+      <p class="small mb-2">Use <code>public_repo</code> scope (or <code>repo</code> for private repos).</p>
+      
+      <label for="token-input" class="mb-1">Paste Token Here:</label>
+      <input type="password" id="token-input" class="form-control" placeholder="ghp_...">
+    </div>
+    
+    <hr/> 
+    
+    <h3>Settings & Data</h3>
+    <div class="form-group mb-3">
+      <label class="d-flex items-center">
+        <input type="checkbox" id="show-private-repos" class="form-checkbox">
+        <span>Show private repository stats</span>
+      </label>
+      <p class="small mb-0 mt-2">Requires a token with <code>repo</code> scope.</p> 
+    </div>
+    <div class="form-group mb-0"> 
+      <button id="clear-cache" class="btn">Clear Cached Data</button>
+      <p class="small mb-0 mt-2">Removes cached contributor stats. Settings are preserved.</p>
+    </div>
+  </body>
+</html>

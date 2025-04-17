@@ -1,3 +1,6 @@
 node_modules
 npm_debug.log
 src.zip
+
+.wxt
+.output
