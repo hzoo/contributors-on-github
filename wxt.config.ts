@@ -1,4 +1,5 @@
 import { defineConfig } from 'wxt';
+import { version } from './package.json';
 
 export default defineConfig({
   manifest: {
@@ -8,7 +9,7 @@ export default defineConfig({
     homepage_url: 'https://github.com/hzoo/contributors-on-github',
     // Keep the key for development stability if needed, but usually removed for production builds outside CRX store
     // key: "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwnKOOu3IkB/A55pdBjEV988NSgMzl8KDo4vZeCz9uuWEyYRLOF63/i8rm4ujFgGm+sfOqIm7u3wNKmgIfEdZwdswWeVC/0/Gra4frixoiQcsykapk7bKFAuFDA06p4jHmmfZZs32bujZaqRDE9Fm4lJ4+otikCmZodHf5oxHu1NdGVSlyiFDpqh7wkg6zhUvOU5vr2bC/Ot5EMAMEtv6oHW5MAflxnLvERc0pK2abVRWvXBM9EbsekSa+d4WwJ2tMDFOe2KDM/FS6+6Jjhm/6SKDc30b+o9Ts8ueDNg8anZ0bOYvzdFtTZYqyQ18zYV252UKDOAgg1rhJkUe9RvNnwIDAQAB",
-    version: '1.0.9', // Consider reading from package.json: process.env.npm_package_version
+    version: version,
     icons: {
       '128': '/icon-128.png', // Path relative to public directory
     },
