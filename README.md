@@ -2,7 +2,7 @@
 
 A browser extension that shows contributor information on GitHub pull requests, including whether it's a user's first contribution.
 
-[![](pr.gif)](https://github.com/babel/babel/pull/3283)
+![](pr.gif)
 
 ### Download
 
